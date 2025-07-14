@@ -304,6 +304,7 @@ def procesar_para_powerBI(path_csv, año, fecha_ultima_venta = None, mercado = N
         if col in df.columns:
             df[col] = df[col].astype(str).str.replace(r'\s+', '', regex=True)
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+            df[col] = df[col].round(0).astype(int)
 
     if 'Mes' in df.columns:
         df['Mes'] = pd.to_numeric(df['Mes'], errors='coerce').fillna(0).astype(int)
@@ -348,5 +349,5 @@ def procesar_para_powerBI(path_csv, año, fecha_ultima_venta = None, mercado = N
         nombre_archivo = '_'.join(nombre_partes) + '.csv'
 
         df.to_csv(nombre_archivo, index=False, encoding='utf-8-sig', sep = sep)
-        
+
     return df
