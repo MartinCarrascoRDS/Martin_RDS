@@ -1,0 +1,29 @@
+# Ignorar entornos virtuales
+venv/
+env/
+.venv/
+
+# Archivos compilados de Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Archivos de notebooks temporales
+.ipynb_checkpoints/
+
+# Config de VSCode
+.vscode/
+
+# Archivos temporales del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de logs
+*.log
+
+# Archivos de bases de datos SQLite
+*.sqlite3
+
+# Archivos de bases de datos en general
+*.csv
+*.xlsx

@@ -236,7 +236,11 @@ def ventas_semanales(ruta_archivo_anterior, ruta_archivo_actual, ruta_salida = N
 
 
 
-def procesar_para_powerBI(path_csv, año, producto = None, marca = None, categoria = None, subcategoria = None, seller = None, sep = ','):
+def procesar_para_powerBI(path_csv, año, fecha_ultima_venta = None, mercado = None, producto = None, marca = None, categoria = None, subcategoria = None, seller = None, sep = ','):
+
+    """
+    Procesa una base de datos proveniente de un archivo CSV de Nubimetrics para su uso en Power BI.
+    """
     with open(path_csv, mode = 'r', encoding = 'utf-8') as f:
         lines = f.readlines()
 
@@ -314,11 +318,10 @@ def procesar_para_powerBI(path_csv, año, producto = None, marca = None, categor
     cols.insert(mes_index, 'Año')
     df = df[cols]
 
-    def obtener_ultimo_dia(año, mes):
-        ultimo_dia = calendar.monthrange(año, mes)[1]
-        return pd.Timestamp(year=año, month=mes, day=ultimo_dia)
+    def obtener_primer_dia(año, mes):
+        return pd.Timestamp(year=año, month=mes, day=1)
 
-    df['Fecha_Compra'] = df.apply(lambda row: obtener_ultimo_dia(row['Año'], row['Mes']), axis=1)
+    df['Fecha_Compra'] = df.apply(lambda row: obtener_primer_dia(row['Año'], row['Mes']), axis=1)
     df['Fecha_Compra'] = df['Fecha_Compra'].dt.strftime('%Y-%m-%d')
 
     cols = list(df.columns)
@@ -327,4 +330,23 @@ def procesar_para_powerBI(path_csv, año, producto = None, marca = None, categor
     cols.insert(mes_index + 1, 'Fecha_Compra')
     df = df[cols]
 
+    if fecha_ultima_venta and mercado:
+        nombre_partes = [f'Ventas_procesadas_mercado_de_{mercado}']
+
+        if producto:
+            nombre_partes.append(f'producto_{producto}')
+        if marca:
+            nombre_partes.append(f'marca_{marca}')
+        if categoria:
+            nombre_partes.append(f'categoria_{categoria}')
+        if subcategoria:
+            nombre_partes.append(f'subcategoria_{subcategoria}')
+        if seller:
+            nombre_partes.append(f'seller_{seller}')
+
+        nombre_partes.append(f'año_{año}_hasta_{fecha_ultima_venta}')
+        nombre_archivo = '_'.join(nombre_partes) + '.csv'
+
+        df.to_csv(nombre_archivo, index=False, encoding='utf-8-sig', sep = sep)
+        
     return df
