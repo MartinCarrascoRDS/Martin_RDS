@@ -12,7 +12,7 @@ def extraer_numero_de_paquetes(estado_str):
     match = re.search(r"Paquete de (\d+)", str(estado_str))
     return int(match.group(1)) if match else 0
 
-archivo_venta = '/Users/martincarrasco/Desktop/Martín_Carrasco/Testeo Reportes/Análisis márgenes/Testeo Python Ventas Bicisol.xlsx'
+archivo_venta = '/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/2025/Cuentas RDS/Blackpartscl/VENTAS BLACKPARTS JUNIO 2025.xlsx'
 hoja_venta = 'Ventas CL'
 skiprows = 5
 df = pd.read_excel(archivo_venta, sheet_name = hoja_venta, skiprows = skiprows)
