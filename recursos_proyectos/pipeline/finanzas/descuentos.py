@@ -15,18 +15,15 @@ descuentos_importadoras = {
     'NC': 0.04
 }
 
-def aplicar_descuentos(df, fecha_col, fecha_inicio, fecha_fin, descuentos_dict, activar = True):
+def aplicar_descuentos(df, fecha_col, fecha_inicio, fecha_fin, descuentos_dict, activar=True, reglas_extra=None):
     if not activar:
         print("Descuentos no aplicados, devolviendo el DataFrame original.")
         return df
-    
-    # Asegurarse de que la fecha esté en formato datetime
-    df[fecha_col] = pd.to_datetime(df[fecha_col])
 
-    # Verificar si la fila está dentro del rango de fechas
+    df = df.copy()
+    df[fecha_col] = pd.to_datetime(df[fecha_col])
     en_rango = (df[fecha_col] >= fecha_inicio) & (df[fecha_col] <= fecha_fin)
 
-    # Identificar todas las columnas SKU_i y sus costos
     sku_cols = [col for col in df.columns if col.startswith("SKU_") and col[-1].isdigit()]
     costo_cols = [f"Costo_{col}" for col in sku_cols]
 
@@ -41,7 +38,6 @@ def aplicar_descuentos(df, fecha_col, fecha_inicio, fecha_fin, descuentos_dict, 
             if not en_rango.loc[row.name]:
                 return costo
 
-            # Extraer prefijo de importadora
             sku_str = str(sku).strip().upper()
             partes = sku_str.split('-')
             if len(partes) < 1:
@@ -53,4 +49,30 @@ def aplicar_descuentos(df, fecha_col, fecha_inicio, fecha_fin, descuentos_dict, 
 
         df[nuevo_col] = df.apply(aplicar_descuento, axis=1)
 
+    if reglas_extra:
+        for regla in reglas_extra:
+            df = df.apply(regla, axis=1)
+
     return df
+
+
+def descuento_sku_prefijo(row, prefijo="IT-", porcentaje=0.15, fecha_col="Fecha de venta", fecha_inicio=None, fecha_fin=None):
+    fecha = pd.to_datetime(row[fecha_col])
+
+    if fecha_inicio is not None and fecha < pd.to_datetime(fecha_inicio):
+        return row
+    if fecha_fin is not None and fecha > pd.to_datetime(fecha_fin):
+        return row
+
+    columnas_sku = [col for col in row.index if col.startswith("SKU_") and col[-1].isdigit()]
+
+    for col_sku in columnas_sku:
+        i = col_sku.split('_')[-1]
+        col_costo = f"Costo_post_dcto_SKU_{i}"
+
+        if pd.notna(row[col_sku]) and str(row[col_sku]).startswith(prefijo):
+            if col_costo in row and pd.notna(row[col_costo]):
+                row[col_costo] *= (1 - porcentaje)
+
+    return row
+    

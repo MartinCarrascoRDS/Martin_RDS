@@ -1,0 +1,11 @@
+En el archivo contabilidad_y_finanzas.py, se intentó realizar el análisis de márgenes automatizado
+que previamente se realizó en excel. Siguiendo una lógica similar, los contenidos de la carpeta
+Análisis márgenes tendrán como finalidad realizar la misma automatización pero de forma desagregada,
+es decir, en partes.
+
+La diferencia principal de la lógica es que, mientras que en contabilidad_y_finanzas.py,
+las ventas que contienen más de un sku se separan por filas (por ejemplo, un producto vendido
+que está compuesto por 3 sku, tendrá 3 filas, una con cada uno de los sku), en este ejercicio
+se hará como en el excel manual, es decir, que cada fila tendrá columnas adicionales para
+mostrar los sku, la cantidad de cada uno de los sku, sus costos, sus descuentos por cyber,
+y sus costos finales, llegando así al costo final del producto.
