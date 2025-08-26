@@ -11,7 +11,6 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
 from tensorflow.keras.callbacks import EarlyStopping
 
-
 class ModelosPronosticoVentas:
     def __init__(
         self,
@@ -39,13 +38,13 @@ class ModelosPronosticoVentas:
         self.num_meses_test = self._contar_meses(self.fecha_inicio_test, self.fecha_fin_test)
 
         os.makedirs(self.carpeta_graficos, exist_ok=True)
-        self.df["Fecha_Compra"] = pd.to_datetime(self.df["Fecha_Compra"])
+        self.df["Fecha venta"] = pd.to_datetime(self.df["Fecha venta"])
 
     def _contar_meses(self, inicio, fin):
         return (fin.year - inicio.year) * 12 + (fin.month - inicio.month + 1)
 
     def _crear_lags(self, df, columnas_grupo, n_lags):
-        df = df.sort_values('Fecha_Compra').copy()
+        df = df.sort_values('Fecha venta').copy()
         for lag in range(1, n_lags + 1):
             df[f'lag_{lag}'] = df.groupby(columnas_grupo)['Unidades_Vendidas'].shift(lag)
         return df
@@ -55,10 +54,10 @@ class ModelosPronosticoVentas:
         return nombre
 
     def _graficar_y_guardar(self, df_filtro, df_test, y_pred, mae, rmse, nombre_archivo):
-        fechas_pronostico = df_test["Fecha_Compra"].values
+        fechas_pronostico = df_test["Fecha venta"].values
 
         fig, ax = plt.subplots(figsize=(10, 5))
-        ax.plot(df_filtro["Fecha_Compra"], df_filtro["Unidades_Vendidas"], label="Datos Reales", marker="o")
+        ax.plot(df_filtro["Fecha venta"], df_filtro["Unidades_Vendidas"], label="Datos Reales", marker="o")
         ax.plot(fechas_pronostico, y_pred, label="Pronóstico", marker="x", linestyle="--", color="orange")
         ax.set_title(f'{nombre_archivo} | MAE: {mae:.1f} | RMSE: {rmse:.1f}')
         ax.set_xlabel('Fecha')
@@ -80,15 +79,15 @@ class ModelosPronosticoVentas:
 
         for _, grupo in grupos.iterrows():
             filtro = (self.df[self.columnas_grupo] == grupo.values).all(axis=1)
-            df_filtro = self.df[filtro].sort_values("Fecha_Compra")
+            df_filtro = self.df[filtro].sort_values("Fecha venta")
 
             df_train = df_filtro[
-                (df_filtro["Fecha_Compra"] >= self.fecha_inicio_train) &
-                (df_filtro["Fecha_Compra"] <= self.fecha_fin_train)
+                (df_filtro["Fecha venta"] >= self.fecha_inicio_train) &
+                (df_filtro["Fecha venta"] <= self.fecha_fin_train)
             ]
             df_test = df_filtro[
-                (df_filtro["Fecha_Compra"] >= self.fecha_inicio_test) &
-                (df_filtro["Fecha_Compra"] <= self.fecha_fin_test)
+                (df_filtro["Fecha venta"] >= self.fecha_inicio_test) &
+                (df_filtro["Fecha venta"] <= self.fecha_fin_test)
             ]
 
             if (
@@ -124,7 +123,7 @@ class ModelosPronosticoVentas:
                 self._graficar_y_guardar(df_filtro, df_test, y_pred, mae, rmse, nombre_archivo)
 
                 resultados.append({**grupo.to_dict(), "MAE": mae, "RMSE": rmse})
-                predicciones.append({**grupo.to_dict(), "Fecha": df_test["Fecha_Compra"].values,
+                predicciones.append({**grupo.to_dict(), "Fecha": df_test["Fecha venta"].values,
                                      "y_real": y_test, "y_pred": y_pred})
 
             except Exception as e:
@@ -141,18 +140,18 @@ class ModelosPronosticoVentas:
 
         for _, grupo in grupos.iterrows():
             filtro = (self.df[self.columnas_grupo] == grupo.values).all(axis=1)
-            df_filtro = self.df[filtro].sort_values("Fecha_Compra")
+            df_filtro = self.df[filtro].sort_values("Fecha venta")
 
             df_lags = self._crear_lags(df_filtro, self.columnas_grupo, self.n_lags)
             df_lags = df_lags.dropna()
 
             df_train = df_lags[
-                (df_lags["Fecha_Compra"] >= self.fecha_inicio_train) &
-                (df_lags["Fecha_Compra"] <= self.fecha_fin_train)
+                (df_lags["Fecha venta"] >= self.fecha_inicio_train) &
+                (df_lags["Fecha venta"] <= self.fecha_fin_train)
             ]
             df_test = df_lags[
-                (df_lags["Fecha_Compra"] >= self.fecha_inicio_test) &
-                (df_lags["Fecha_Compra"] <= self.fecha_fin_test)
+                (df_lags["Fecha venta"] >= self.fecha_inicio_test) &
+                (df_lags["Fecha venta"] <= self.fecha_fin_test)
             ]
 
             if (
@@ -184,7 +183,7 @@ class ModelosPronosticoVentas:
                 self._graficar_y_guardar(df_filtro, df_test, y_pred, mae, rmse, nombre_archivo)
 
                 resultados.append({**grupo.to_dict(), "MAE": mae, "RMSE": rmse})
-                predicciones.append({**grupo.to_dict(), "Fecha": df_test["Fecha_Compra"].values,
+                predicciones.append({**grupo.to_dict(), "Fecha": df_test["Fecha venta"].values,
                                      "y_real": y_test, "y_pred": y_pred})
 
             except Exception as e:
@@ -201,15 +200,15 @@ class ModelosPronosticoVentas:
 
         for _, grupo in grupos.iterrows():
             filtro = (self.df[self.columnas_grupo] == grupo.values).all(axis=1)
-            df_filtro = self.df[filtro].sort_values("Fecha_Compra")
+            df_filtro = self.df[filtro].sort_values("Fecha venta")
 
             df_train = df_filtro[
-                (df_filtro["Fecha_Compra"] >= self.fecha_inicio_train) &
-                (df_filtro["Fecha_Compra"] <= self.fecha_fin_train)
+                (df_filtro["Fecha venta"] >= self.fecha_inicio_train) &
+                (df_filtro["Fecha venta"] <= self.fecha_fin_train)
             ]
             df_test = df_filtro[
-                (df_filtro["Fecha_Compra"] >= self.fecha_inicio_test) &
-                (df_filtro["Fecha_Compra"] <= self.fecha_fin_test)
+                (df_filtro["Fecha venta"] >= self.fecha_inicio_test) &
+                (df_filtro["Fecha venta"] <= self.fecha_fin_test)
             ]
 
             if (
@@ -221,7 +220,7 @@ class ModelosPronosticoVentas:
                 continue
 
             try:
-                df_train_prophet = df_train.rename(columns={"Fecha_Compra": "ds", "Unidades_Vendidas": "y"})
+                df_train_prophet = df_train.rename(columns={"Fecha venta": "ds", "Unidades_Vendidas": "y"})
                 m = Prophet()
                 m.fit(df_train_prophet)
 
@@ -242,7 +241,7 @@ class ModelosPronosticoVentas:
                 self._graficar_y_guardar(df_filtro, df_test, y_pred, mae, rmse, nombre_archivo)
 
                 resultados.append({**grupo.to_dict(), "MAE": mae, "RMSE": rmse})
-                predicciones.append({**grupo.to_dict(), "Fecha": df_test["Fecha_Compra"].values,
+                predicciones.append({**grupo.to_dict(), "Fecha": df_test["Fecha venta"].values,
                                      "y_real": y_test, "y_pred": y_pred})
 
             except Exception as e:
@@ -266,18 +265,18 @@ class ModelosPronosticoVentas:
 
         for _, grupo in grupos.iterrows():
             filtro = (self.df[self.columnas_grupo] == grupo.values).all(axis=1)
-            df_filtro = self.df[filtro].sort_values("Fecha_Compra")
+            df_filtro = self.df[filtro].sort_values("Fecha venta")
 
             df_lags = self._crear_lags(df_filtro, self.columnas_grupo, self.n_lags)
             df_lags = df_lags.dropna()
 
             df_train = df_lags[
-                (df_lags["Fecha_Compra"] >= self.fecha_inicio_train) &
-                (df_lags["Fecha_Compra"] <= self.fecha_fin_train)
+                (df_lags["Fecha venta"] >= self.fecha_inicio_train) &
+                (df_lags["Fecha venta"] <= self.fecha_fin_train)
             ]
             df_test = df_lags[
-                (df_lags["Fecha_Compra"] >= self.fecha_inicio_test) &
-                (df_lags["Fecha_Compra"] <= self.fecha_fin_test)
+                (df_lags["Fecha venta"] >= self.fecha_inicio_test) &
+                (df_lags["Fecha venta"] <= self.fecha_fin_test)
             ]
 
             if (
@@ -326,7 +325,7 @@ class ModelosPronosticoVentas:
                 self._graficar_y_guardar(df_filtro, df_test, y_pred, mae, rmse, nombre_archivo)
 
                 resultados.append({**grupo.to_dict(), "MAE": mae, "RMSE": rmse})
-                predicciones.append({**grupo.to_dict(), "Fecha": df_test["Fecha_Compra"].values,
+                predicciones.append({**grupo.to_dict(), "Fecha": df_test["Fecha venta"].values,
                                      "y_real": y_test, "y_pred": y_pred})
 
             except Exception as e:

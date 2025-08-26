@@ -41,7 +41,7 @@ output_path = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgene
 df.to_excel(output_path, index = False)"""
 
 def limpiar_sku(sku):
-    """Limpia prefijos F-, XX- al inicio de cada fragmento separado por '/'. """
+    """Limpia prefijos 'F- ' y 'XX- ' al inicio de cada fragmento separado por '/'. """
     if pd.isna(sku):
         return sku
     sku = str(sku).upper()
@@ -51,6 +51,20 @@ def limpiar_sku(sku):
         for parte in partes
     ]
     return " / ".join(partes_limpias)
+
+def limpiar_sku2(sku):
+    """Limpia 'F- ', 'XX- ' y 'Z- ' en cualquier parte de cada fragmento separado por '/'. """
+    if pd.isna(sku):
+        return sku
+    sku = str(sku).upper()
+    partes = re.split(r"\s*/\s*", sku)
+    partes_limpias = [
+        re.sub(r"(F-\s*|XX-\s*|Z-\s*)+", "", parte).strip()
+        for parte in partes
+    ]
+    return " / ".join(partes_limpias)
+
+# 19/08/2025: PARA LOS PRÓXIMOS ANÁLISIS, DECIDIR USAR limpiar_sku o limpiar_sku2 (creo que limpiar_sku2 es más completo)
 
 df["SKU_MAYUSC"] = (
     df["SKU"]
@@ -87,7 +101,7 @@ df["SKU_limpio"] = df["SKU_limpio"].str.replace(
 df["SKU_limpio"] = df["SKU_limpio"].str.replace(r"\s{2,}", " ", regex=True).str.strip()
 
 def obtener_proveedores(sku_limpio):
-    partes = sku_limpio.split(" / ")
+    partes = str(sku_limpio).split(" / ")
     siglas = set()
 
     for parte in partes:

@@ -20,6 +20,7 @@ def procesar_por_par_producto_marca(path_csv, fecha_limite, año, seller = None,
     
     df.rename(columns = {
         'Titulo_Publicacion': 'Producto',
+        'sku': 'SKU',
         'level3': 'Categoría',
         'level4': 'Subcategoría',
         'Periodo.Mes': 'Mes',
@@ -56,11 +57,10 @@ def procesar_por_par_producto_marca(path_csv, fecha_limite, año, seller = None,
     cols.insert(mes_index, 'Año')
     df = df[cols]
 
-    def obtener_ultimo_dia(año, mes):
-        ultimo_dia = calendar.monthrange(año, mes)[1]
-        return pd.Timestamp(year=año, month=mes, day=ultimo_dia)
+    def obtener_primer_dia(año, mes):
+        return pd.Timestamp(year=año, month=mes, day=1)
 
-    df['Fecha venta'] = df.apply(lambda row: obtener_ultimo_dia(row['Año'], row['Mes']), axis=1)
+    df['Fecha venta'] = df.apply(lambda row: obtener_primer_dia(row['Año'], row['Mes']), axis=1)
     df['Fecha venta'] = df['Fecha venta'].dt.strftime('%Y-%m-%d')
 
     cols = list(df.columns)
@@ -117,6 +117,7 @@ def procesar_por_columna(path_csv, fecha_limite, año, columna_agrupacion, selle
     
     df.rename(columns = {
         'Titulo_Publicacion': 'Producto',
+        'sku': 'SKU',
         'level3': 'Categoría',
         'level4': 'Subcategoría',
         'Periodo.Mes': 'Mes',
@@ -153,11 +154,10 @@ def procesar_por_columna(path_csv, fecha_limite, año, columna_agrupacion, selle
     cols.insert(mes_index, 'Año')
     df = df[cols]
 
-    def obtener_ultimo_dia(año, mes):
-        ultimo_dia = calendar.monthrange(año, mes)[1]
-        return pd.Timestamp(year=año, month=mes, day=ultimo_dia)
+    def obtener_primer_dia(año, mes):
+        return pd.Timestamp(year=año, month=mes, day=1)
 
-    df['Fecha venta'] = df.apply(lambda row: obtener_ultimo_dia(row['Año'], row['Mes']), axis=1)
+    df['Fecha venta'] = df.apply(lambda row: obtener_primer_dia(row['Año'], row['Mes']), axis=1)
     df['Fecha venta'] = df['Fecha venta'].dt.strftime('%Y-%m-%d')
 
     cols = list(df.columns)
@@ -191,7 +191,7 @@ def procesar_por_columna(path_csv, fecha_limite, año, columna_agrupacion, selle
 
     df = df.groupby(
     [columna_agrupacion, "Fecha venta"], as_index=False
-).agg({"Unidades_Vendidas": "sum"})
+    ).agg({"Unidades_Vendidas": "sum"})
 
     df = df[[columna_agrupacion, "Fecha venta", "Unidades_Vendidas"]]
     return df
@@ -265,7 +265,8 @@ def procesar_para_powerBI(path_csv, año, fecha_ultima_venta, mercado, producto 
         'level4': 'Subcategoría',
         'Periodo.Mes': 'Mes',
         'Nombre_Vendedor': 'Seller',
-        'Volumen_de_Ventas_Moneda_Local': 'Ventas'
+        'Volumen_de_Ventas_Moneda_Local': 'Ventas',
+        'Cancelaciones_Moneda_Local': 'Cancelaciones'
     }, inplace = True)
 
     if 'Producto' in df.columns:
@@ -308,7 +309,7 @@ def procesar_para_powerBI(path_csv, año, fecha_ultima_venta, mercado, producto 
         if col in df.columns:
             df[col] = df[col].astype(str)
 
-    for col in ['Unidades_Vendidas', 'Ventas']:
+    for col in ['Unidades_Vendidas', 'Ventas', 'Cancelaciones']:
         if col in df.columns:
             df[col] = df[col].astype(str).str.replace(r'\s+', '', regex=True)
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
@@ -416,3 +417,32 @@ def procesar_para_powerBI(path_csv, año, fecha_ultima_venta, mercado, producto 
     df.to_csv(nombre_archivo, index=False, encoding='utf-8-sig', sep = sep)
 
     return df
+
+
+
+meses_es = {
+        'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
+        'mayo': '05', 'junio': '06', 'julio': '07', 'agosto': '08',
+        'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'
+    }
+
+def convertir_fechas(fecha_str):
+    """
+    Junto con meses_es, fue directamente obtenida del paso 4 del análisis de márgenes.
+    Está especialmente pensado para las bases de ventas obtenidas de Mercado Libre.
+    """
+    if pd.isna(fecha_str):
+        return pd.NaT
+    try:
+        fecha_str = str(fecha_str).lower()
+        fecha_str = re.sub(r"\s*hs\.?", "", fecha_str)
+        partes = fecha_str.split(' de ')
+        if len(partes) < 3:
+            return pd.NaT
+        dia = partes[0].strip().zfill(2)
+        mes = meses_es.get(partes[1].strip(), '01')
+        año_hora = partes[2].strip()
+        año = año_hora.split()[0]
+        return pd.to_datetime(f"{año}/{mes}/{dia}", format="%Y/%m/%d")
+    except Exception:
+        return pd.NaT

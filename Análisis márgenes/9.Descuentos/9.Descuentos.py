@@ -9,27 +9,29 @@ Ambos se encuentran en recursos_proyectos/pipeline/finanzas/descuentos.py.
 import pandas as pd
 import numpy as np
 from pipeline.finanzas.descuentos import aplicar_descuentos, descuentos_importadoras, descuento_sku_prefijo
+import re
 
 archivo_venta = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/8.Cruzar_costos_gral/Paso8_listo.xlsx'
 hoja_venta = 'Sheet1'
 
 df_ventas = pd.read_excel(archivo_venta, sheet_name=hoja_venta, dtype={'# de venta': str})
 
-ACTIVAR_DESCUENTOS = True  # Cambia a False si no quieres aplicar descuentos
+ACTIVAR_DESCUENTOS = False  # Cambia a False si no quieres aplicar descuentos
 
 fecha_inicio = pd.Timestamp('2025-06-02')
 fecha_fin = pd.Timestamp('2025-06-08')
 
-# reglas_adicionales = [
-#     lambda row: descuento_sku_prefijo(
-#         row,
-#         prefijo='IT- ',
-#         porcentaje=0.15,
-#         fecha_col='Fecha de venta',
-#         fecha_inicio=pd.Timestamp('2025-06-01'),
-#         fecha_fin=pd.Timestamp('2025-06-30')
-#     )
-# ]
+reglas_adicionales = [
+    lambda row: descuento_sku_prefijo(
+        row,
+        prefijo='CR- ',
+        porcentaje=0.03,
+        fecha_col='Fecha de venta',
+        fecha_inicio=pd.Timestamp('2025-07-28'),
+        fecha_fin=pd.Timestamp('2025-07-31'),
+        excluir_full = True
+    )
+]
 """
 ESTA REGLA ES SOLO PARA RDS1, RECORDAR ACTIVAR EN FUNCIÓN PARA APLICAR DESCUENTOS
 """
@@ -76,17 +78,79 @@ sku_cols = [col for col in df_ventas.columns if col.startswith("SKU_") and col[-
 
 if ACTIVAR_DESCUENTOS:
     columnas_costos = [f"Costo_post_dcto_{col}" for col in sku_cols]
+    columnas_costos_full = [f"Costo_full_{col}" for col in sku_cols]
 else:
     columnas_costos = [f"Costo_{col}" for col in sku_cols]
+    columnas_costos_full = [f'Costo_full_{col}' for col in sku_cols]
 
-def calcular_costo_final(row):
+"""def calcular_costo_final(row):
     if row['Forma de entrega'] == 'Mercado Envíos Full':
-        return row['Costo_full']
-    else:
-        valores = [row[col] for col in columnas_costos if col in row and pd.notna(row[col])]
+        valores = pd.to_numeric([row[col] for col in columnas_costos_full if col in row and pd.notna(row[col])])
         if len(valores) == 0:
             return np.nan
         return sum(valores)
+    else:
+        valores = pd.to_numeric([row[col] for col in columnas_costos if col in row and pd.notna(row[col])])
+        if len(valores) == 0:
+            return np.nan
+        return sum(valores)"""
+
+"""def calcular_costo_final(row):
+    if row['Forma de entrega'] == 'Mercado Envíos Full':
+        valores = [
+            pd.to_numeric(row[col], errors='coerce')
+            for col in columnas_costos_full
+            if col in row and pd.notna(row[col])
+        ]
+    else:
+        valores = [
+            pd.to_numeric(row[col], errors='coerce')
+            for col in columnas_costos
+            if col in row and pd.notna(row[col])
+        ]
+    
+    valores = [v for v in valores if pd.notna(v)]
+    if len(valores) == 0:
+        return np.nan
+    return sum(valores)"""
+
+def limpiar_valor(val):
+    """
+    Recibe val (puede ser str, int, float, etc.).
+    - Si es string, quita '$' y puntos de miles, luego lo convierte a float.
+    - Si ya es numérico, lo devuelve tal cual.
+    - Si no puede, devuelve NaN.
+    """
+    if pd.isna(val):
+        return np.nan
+    if isinstance(val, str):
+        # Quitar signo de peso y puntos
+        limpio = re.sub(r"[^\d\-]", "", val)
+        try:
+            return float(limpio)
+        except:
+            return np.nan
+    try:
+        return float(val)
+    except:
+        return np.nan
+
+def calcular_costo_final(row):
+    forma_entrega = str(row.get('Forma de entrega', '')).strip()
+
+    if forma_entrega == 'Mercado Envíos Full':
+        cols = columnas_costos_full
+    else:
+        cols = columnas_costos
+
+    valores = []
+    for col in cols:
+        if col in row:
+            v = limpiar_valor(row[col])
+            if not pd.isna(v):
+                valores.append(v)
+
+    return sum(valores) if valores else np.nan
 
 df_ventas['Costo_final_producto'] = df_ventas.apply(calcular_costo_final, axis=1) * df_ventas['Unidades']
 

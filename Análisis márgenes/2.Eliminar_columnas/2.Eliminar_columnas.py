@@ -10,6 +10,8 @@ archivo_venta = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márge
 hoja_venta = 'Sheet1'
 df = pd.read_excel(archivo_venta, sheet_name = hoja_venta, dtype = {'# de venta': str})
 
+print(f"Registros antes del paso 2: {len(df)}")
+
 columnas_unicas = []
 contador_estado = 0
 contador_unidades = 0

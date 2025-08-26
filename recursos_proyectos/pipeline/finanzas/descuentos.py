@@ -7,13 +7,15 @@ Pensado especialmente para el paso 9, que se encuentra en /Users/martincarrasco/
 
 import pandas as pd
 
-descuentos_importadoras = {
-    'MA': 0.05,
-    'RX': 0.10,
-    'CR': 0.03,
-    'AL': 0.04,
-    'NC': 0.04
-}
+# descuentos_importadoras = {
+#     'MA': 0.05,
+#     'RX': 0.10,
+#     'CR': 0.03,
+#     'AL': 0.04,
+#     'NC': 0.04
+# }
+
+descuentos_importadoras = {} # Se deja vacío cuando no hay un descuento de tipo cyber
 
 def aplicar_descuentos(df, fecha_col, fecha_inicio, fecha_fin, descuentos_dict, activar=True, reglas_extra=None):
     if not activar:
@@ -56,9 +58,22 @@ def aplicar_descuentos(df, fecha_col, fecha_inicio, fecha_fin, descuentos_dict, 
     return df
 
 
-def descuento_sku_prefijo(row, prefijo="IT-", porcentaje=0.15, fecha_col="Fecha de venta", fecha_inicio=None, fecha_fin=None):
-    fecha = pd.to_datetime(row[fecha_col])
+def descuento_sku_prefijo(
+    row,
+    prefijo="IT-",
+    porcentaje=0.15,
+    fecha_col="Fecha de venta",
+    fecha_inicio=None,
+    fecha_fin=None,
+    excluir_full=False
+):
 
+    if excluir_full:
+        forma_entrega = str(row.get("Forma de entrega", "")).strip().lower()
+        if "full" in forma_entrega:
+            return row
+
+    fecha = pd.to_datetime(row[fecha_col])
     if fecha_inicio is not None and fecha < pd.to_datetime(fecha_inicio):
         return row
     if fecha_fin is not None and fecha > pd.to_datetime(fecha_fin):
