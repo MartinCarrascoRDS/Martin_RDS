@@ -16,8 +16,7 @@ def extraer_numero_de_paquetes(estado_str):
     match = re.search(r"Paquete de (\d+)", str(estado_str))
     return int(match.group(1)) if match else 0
 
-año = 2024 # RECORDAR CAMBIAR EL AÑO PARA GENERAR NUEVAS CARPETAS
-
+año = 2025 # RECORDAR CAMBIAR EL AÑO PARA GENERAR NUEVAS CARPETAS
 cuenta_meli = input('Indique la cuenta de Mercado Libre a la que corresponde este análisis (ejemplo: BLACKPARTS): ')
 fecha = input('Indique la fecha del análisis (ejemplo: JUNIO 2025): ')
 
@@ -33,7 +32,7 @@ if 'Fecha de venta' in df.columns:
 df['Forma de entrega'] = df['Forma de entrega'].replace(r'^\s*$', np.nan, regex=True)
 df["Forma de entrega"] = df["Forma de entrega"].fillna(method = 'ffill')
 
-df_ingresos = df[["# de venta", "Fecha de venta", "Estado", "Unidades", "SKU", "# de publicación", "Título de la publicación", "Precio unitario de venta de la publicación (CLP)", "Forma de entrega"]]
+df_ingresos = df[["# de venta", "Fecha de venta", "Estado", "Unidades", "SKU", "# de publicación", "Canal de venta", "Título de la publicación", "Precio unitario de venta de la publicación (CLP)", "Forma de entrega"]]
 df_ingresos["Cuenta Meli"] = cuenta_meli
 
 output_folder = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/1.Leer_df_eliminar_paquetes/{año}/{fecha}'
@@ -75,8 +74,6 @@ df_encabezados = df_encabezados.iloc[encabezados_indices].copy()
 df_paquetes = df_encabezados[["# de venta", "Fecha de venta", "Ingresos por productos (CLP)"]]
 df_paquetes['Cuenta Meli'] = cuenta_meli
 
-print(encabezados_indices)
-
 ingreso_total = df['Ingresos por productos (CLP)'].sum()
 ingreso_paquetes = df.iloc[encabezados_indices]['Ingresos por productos (CLP)'].sum()
 porcentaje = 100 * ingreso_paquetes / ingreso_total if ingreso_total else 0
@@ -94,5 +91,5 @@ print(f"Existen {df['# de venta'].nunique()} registros en la base de datos de ve
 output_path = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/1.Leer_df_eliminar_paquetes/Paso1_listo.xlsx'
 df.to_excel(output_path, index=False)
 
-output_path_paquetes = f'{output_folder}/Paso1_ventas_paquete_{cuenta_meli}_{fecha}.xlsx'
+output_path_paquetes = f'{output_folder}/{fecha} {cuenta_meli} VENTAS PAQUETE.xlsx'
 df_paquetes.to_excel(output_path_paquetes, index = False)

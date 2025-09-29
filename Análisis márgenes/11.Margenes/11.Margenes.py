@@ -21,7 +21,7 @@ elif estados.lower() =='false':
 else:
     raise ValueError('Por favor ingresa un valor válido de estados filtrados (TRUE O FALSE)')
 
-output_folder = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/11.Margenes/{año}/{fecha}/'
+output_folder = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/11.Margenes/{año}/{fecha}'
 os.makedirs(output_folder, exist_ok=True)
 
 def clasificar_precio(valor):
@@ -79,11 +79,11 @@ if estados_filtrados:
     df_positivos["Cantidad SKUs"] = df_positivos[sku_cols].notna().sum(axis=1)
     df_negativos["Cantidad SKUs"] = df_negativos[sku_cols].notna().sum(axis=1)
 
-    output_path = f'{output_folder}MÁRGENES {cuenta_meli} {fecha}.xlsx'
+    output_path = f'{output_folder}/{fecha} {cuenta_meli} MÁRGENES.xlsx'
     df.to_excel(output_path, index=False)
-    output_path_negativos = f'{output_folder}MÁRGENES {cuenta_meli} {fecha} - Utilidades negativas.xlsx'
+    output_path_negativos = f'{output_folder}/{fecha} {cuenta_meli} Utilidades negativas.xlsx'
     df_negativos.to_excel(output_path_negativos, index=False)
-    output_path_positivos = f'{output_folder}MÁRGENES {cuenta_meli} {fecha} - Utilidades positivas.xlsx'
+    output_path_positivos = f'{output_folder}/{fecha} {cuenta_meli} Utilidades positivas.xlsx'
     df_positivos.to_excel(output_path_positivos, index=False)
 
     print(f"Entre las utilidades totales, se obtuvo un margen promedio simple de: {df['Margen'].mean() * 100:.2f}%")
@@ -139,11 +139,11 @@ else:
     df_positivos["Cantidad SKUs"] = df_positivos[sku_cols].notna().sum(axis=1)
     df_negativos["Cantidad SKUs"] = df_negativos[sku_cols].notna().sum(axis=1)
 
-    output_path = f'{output_folder}MÁRGENES {cuenta_meli} {fecha} - ESF.xlsx'
+    output_path = f'{output_folder}/{fecha} {cuenta_meli} MÁRGENES ESF.xlsx'
     df.to_excel(output_path, index=False)
-    output_path_negativos = f'{output_folder}MÁRGENES {cuenta_meli} {fecha} - Utilidades negativas - ESF.xlsx'
+    output_path_negativos = f'{output_folder}/{fecha} {cuenta_meli} Utilidades negativas ESF.xlsx'
     df_negativos.to_excel(output_path_negativos, index=False)
-    output_path_positivos = f'{output_folder}MÁRGENES {cuenta_meli} {fecha} - Utilidades positivas - ESF.xlsx'
+    output_path_positivos = f'{output_folder}/{fecha} {cuenta_meli} Utilidades positivas ESF.xlsx'
     df_positivos.to_excel(output_path_positivos, index=False)
 
     print(f"Entre las utilidades totales, considerando todos los estados, se obtuvo un margen promedio simple de: {df['Margen'].mean() * 100:.2f}%")

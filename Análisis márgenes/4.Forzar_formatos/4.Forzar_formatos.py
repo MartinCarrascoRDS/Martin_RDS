@@ -5,7 +5,6 @@ Forzar formato numérico en columnas numéricas
 """
 
 import pandas as pd
-import re
 import numpy as np
 
 cuenta_meli = input('Indique la cuenta de Mercado Libre a la que corresponde este análisis (ejemplo: BLACKPARTS): ')

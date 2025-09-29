@@ -350,7 +350,7 @@ def procesar_para_powerBI(path_csv, año, fecha_ultima_venta, mercado, producto 
         'ATM': 'AUTOMARCO',
         'TEC': 'AUTOTEC',
         'MEC': 'MEC',
-        'IM': 'IMASA',
+        'IM': 'IMISA',
         'IT': 'ITALFRENOS',
         'RDS': 'BODEGA'
     }

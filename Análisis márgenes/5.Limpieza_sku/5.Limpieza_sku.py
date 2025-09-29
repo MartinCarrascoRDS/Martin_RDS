@@ -6,6 +6,7 @@ hacer el cruce con las bases de costo
 
 import pandas as pd
 import re
+from pipeline.procesamiento.funciones_para_analisis_margen import limpiar_sku
 
 archivo_venta = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/4.Forzar_formatos/Paso4_listo.xlsx'
 hoja_venta = 'Sheet1'
@@ -40,30 +41,6 @@ df["SKU_limpio"] = df["SKU_limpio"].str.replace(r"\s{2,}", " ", regex=True).str.
 output_path = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/5.Limpieza_sku/Paso5_listo.xlsx'
 df.to_excel(output_path, index = False)"""
 
-def limpiar_sku(sku):
-    """Limpia prefijos 'F- ' y 'XX- ' al inicio de cada fragmento separado por '/'. """
-    if pd.isna(sku):
-        return sku
-    sku = str(sku).upper()
-    partes = re.split(r"\s*/\s*", sku)
-    partes_limpias = [
-        re.sub(r"^(F-\s*|XX-\s*)+", "", parte).strip()
-        for parte in partes
-    ]
-    return " / ".join(partes_limpias)
-
-def limpiar_sku2(sku):
-    """Limpia 'F- ', 'XX- ' y 'Z- ' en cualquier parte de cada fragmento separado por '/'. """
-    if pd.isna(sku):
-        return sku
-    sku = str(sku).upper()
-    partes = re.split(r"\s*/\s*", sku)
-    partes_limpias = [
-        re.sub(r"(F-\s*|XX-\s*|Z-\s*)+", "", parte).strip()
-        for parte in partes
-    ]
-    return " / ".join(partes_limpias)
-
 # 19/08/2025: PARA LOS PRÓXIMOS ANÁLISIS, DECIDIR USAR limpiar_sku o limpiar_sku2 (creo que limpiar_sku2 es más completo)
 
 df["SKU_MAYUSC"] = (
@@ -78,6 +55,8 @@ df = df[df["SKU_MAYUSC"].notna() & (df["SKU_MAYUSC"] != "")]
 # Aplicar limpieza básica y de prefijos
 df["SKU_limpio"] = df["SKU"].apply(limpiar_sku)
 
+"""
+PASOS QUE AHORA ESTÁN INCLUIDOS EN LA FUNCIÓN DE LIMPIEZA DE SKU
 # Detectar multiplicadores como (X2), (X 2), etc., y convertirlos a "X2"
 df['SKU_limpio'] = df['SKU_limpio'].str.replace(r'\(\s*[Xx]\s*(\d{1,3})\s*\)', r' X\1', regex=True)
 
@@ -99,7 +78,7 @@ df["SKU_limpio"] = df["SKU_limpio"].str.replace(
 
 # Limpiar espacios dobles restantes
 df["SKU_limpio"] = df["SKU_limpio"].str.replace(r"\s{2,}", " ", regex=True).str.strip()
-
+"""
 def obtener_proveedores(sku_limpio):
     partes = str(sku_limpio).split(" / ")
     siglas = set()

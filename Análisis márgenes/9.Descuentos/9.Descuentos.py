@@ -4,6 +4,10 @@ Aplicar descuentos a los costos de productos según un rango de fechas y un dicc
 Se generará una nueva columna "Costo_post_dcto_SKU_{i}" por cada columna SKU_{i} que se haya generado en el paso 6.
 La función 'aplicar_descuentos', junto con el diccionario 'descuentos_importadoras' se encargarán de este proceso.
 Ambos se encuentran en recursos_proyectos/pipeline/finanzas/descuentos.py.
+
+
+RECORDAR: MODIFICAR ESTE SCRIPT PARA QUE VAYA DE ACUERDO A LA FUNCIÓN APLICAR_DESCUENTOS DE PIPELINE.PROCESAMIENTO.PROCESAMIENTO_BASES.FUNCIONES_PARA_ANÁLISIS_MÁRGENES
+PARA ANÁLISIS DE SEPTIEMBRE, QUE VAN A HABER DESCUENTOS.
 """
 
 import pandas as pd

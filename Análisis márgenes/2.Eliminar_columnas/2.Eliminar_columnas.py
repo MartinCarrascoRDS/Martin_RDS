@@ -21,7 +21,7 @@ columnas_eliminar = [
         "Anulaciones y reembolsos (CLP)", "Total (CLP)",
         "Precio unitario de venta de la publicación (CLP)",
         "Mes de facturación de tus cargos", "Venta por publicidad",
-        "Canal de venta", "Tienda oficial", "Variante", "Tipo de publicación", "Factura adjunta",
+        "Tienda oficial", "Variante", "Tipo de publicación", "Factura adjunta",
         "Datos personales o de empresa", "Tipo y número de documento", "Dirección",
         "Tipo de contribuyente", "Actividad económica", "Comprador", "Negocio", "Cédula",
         "Domicilio", "Comuna", "Estado", "Código postal", "País", "Fecha en camino", "Fecha entregado",

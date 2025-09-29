@@ -9,7 +9,7 @@ import os
 
 cuenta_meli = input('Indique la cuenta de Mercado Libre a la que corresponde este análisis (ejemplo: BLACKPARTS): ')
 fecha = input('Indique la fecha del análisis (ejemplo: JUNIO 2025): ')
-año = 2024 # RECORDAR CAMBIAR EL AÑO PARA GENERAR NUEVAS CARPETAS
+año = 2025 # RECORDAR CAMBIAR EL AÑO PARA GENERAR NUEVAS CARPETAS
 
 archivo_ventas = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/1.Leer_df_eliminar_paquetes/1.1.Limpieza_sku/{año}/{fecha}/Paso1.1_{cuenta_meli}_{fecha}_listo.xlsx'
 hoja_ventas = 'Sheet1'
@@ -69,5 +69,5 @@ df['Clasificación Estado'] = df['Estado'].apply(clasificar_estado)
 
 output_folder = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/1.Leer_df_eliminar_paquetes/1.2.Detectar_estados/{año}/{fecha}'
 os.makedirs(output_folder, exist_ok = True)
-output_path = f'{output_folder}/Paso1.2_{cuenta_meli}_{fecha}_listo.xlsx'
+output_path = f'{output_folder}/{fecha} {cuenta_meli} VENTAS TOTALES.xlsx'
 df.to_excel(output_path, index = False)

@@ -5,16 +5,18 @@ Cruzar los costos de los productos que se venden en Full, generando una nueva co
 
 import pandas as pd
 import re
+from pipeline.procesamiento.funciones_para_analisis_margen import limpiar_sku
 
 archivo_venta = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/6.Separar_sku/Paso6_listo.xlsx'
 hoja_venta = 'Sheet1'
-archivo_costo = '/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/2025/Cuentas RDS/COSTOS PARA CRUCE/Costos para cruce al 2025-13-08.xlsx'
+archivo_costo = '/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/2025/Cuentas RDS/COSTOS PARA CRUCE/Costos para cruce al 2025-09-01.xlsx'
 hoja_costo = 'CostosFull'
 
 df_ventas = pd.read_excel(archivo_venta, sheet_name=hoja_venta, dtype={'# de venta': str})
 df_costos = pd.read_excel(archivo_costo, sheet_name=hoja_costo)
 
-df_costos['SKU'] = df_costos['SKU'].astype(str).str.upper().str.strip()
+print(len(df_ventas))
+df_costos['SKU'] = df_costos['SKU'].apply(limpiar_sku)
 
 df_costos_limpio = df_costos[['SKU', 'PRECIO CONFIRMADO']].copy()
 

@@ -6,16 +6,17 @@ que se haya generado en el paso 6.
 
 import pandas as pd
 import re
+from pipeline.procesamiento.funciones_para_analisis_margen import limpiar_sku
 
 archivo_venta = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/7.Cruzar_costos_full/Paso7_listo.xlsx'
 hoja_venta = 'Sheet1'
-archivo_costo = '/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/2025/Cuentas RDS/COSTOS PARA CRUCE/Costos Hyundai al 2025-19-08.xlsx'
+archivo_costo = '/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/2025/Cuentas RDS/COSTOS PARA CRUCE/Costos para cruce al 2025-09-01.xlsx'
 hoja_costo = 'Costos'
 
 df_ventas = pd.read_excel(archivo_venta, sheet_name=hoja_venta, dtype={'# de venta': str})
-df_costos = pd.read_excel(archivo_costo, sheet_name=hoja_costo, usecols = ['SKU', 'Precio dealer'])
+df_costos = pd.read_excel(archivo_costo, sheet_name=hoja_costo, usecols = ['SKU', 'PRECIO'])
 
-df_costos['SKU'] = df_costos['SKU'].astype(str).str.upper().str.strip()
+df_costos['SKU'] = df_costos['SKU'].apply(limpiar_sku)
 duplicados_costos = df_costos.duplicated(subset=['SKU'], keep='first')
 print(f'cantidad de costos duplicados: {duplicados_costos.sum()}')
 if duplicados_costos.any():
@@ -23,7 +24,7 @@ if duplicados_costos.any():
     print(f"Se eliminaron {duplicados_costos.sum()} filas duplicadas en el DataFrame de costos.")
 
 
-sku_a_costo = df_costos.set_index('SKU')['Precio dealer'].to_dict()
+sku_a_costo = df_costos.set_index('SKU')['PRECIO'].to_dict()
 
 sku_cols = [col for col in df_ventas.columns if re.match(r"SKU_\d+$", col)]
 

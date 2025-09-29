@@ -11,7 +11,7 @@ import os
 
 cuenta_meli = input('Indique la cuenta de Mercado Libre a la que corresponde este análisis (ejemplo: BLACKPARTS): ')
 fecha = input('Indique la fecha del análisis (ejemplo: JUNIO 2025): ')
-año = 2024 # RECORDAR CAMBIAR EL AÑO PARA GENERAR NUEVAS CARPETAS
+año = 2025 # RECORDAR CAMBIAR EL AÑO PARA GENERAR NUEVAS CARPETAS
 
 archivo_ventas = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/1.Leer_df_eliminar_paquetes/{año}/{fecha}/Paso1_totales_{cuenta_meli}_{fecha}_listo.xlsx'
 hoja_ventas = 'Sheet1'
@@ -31,17 +31,17 @@ df = pd.read_excel(archivo_ventas, sheet_name = hoja_ventas, dtype = {"# de vent
 
 df = df[df['SKU'].notna()]
 
-def limpiar_sku(sku):
-    """Limpia prefijos 'F- ' y  'XX- ' al inicio de cada fragmento separado por '/'. """
-    if pd.isna(sku):
-        return sku
-    sku = str(sku).upper()
-    partes = re.split(r"\s*/\s*", sku)
-    partes_limpias = [
-        re.sub(r"^(F-\s*|XX-\s*)+", "", parte).strip()
-        for parte in partes
-    ]
-    return " / ".join(partes_limpias)
+# def limpiar_sku(sku):
+#     """Limpia prefijos 'F- ' y  'XX- ' al inicio de cada fragmento separado por '/'. """
+#     if pd.isna(sku):
+#         return sku
+#     sku = str(sku).upper()
+#     partes = re.split(r"\s*/\s*", sku)
+#     partes_limpias = [
+#         re.sub(r"^(F-\s*|XX-\s*)+", "", parte).strip()
+#         for parte in partes
+#     ]
+#     return " / ".join(partes_limpias)
 
 def limpiar_sku2(sku):
     """Limpia 'F- ', 'XX- ' y 'Z- ' en cualquier parte de cada fragmento separado por '/'. """
@@ -67,7 +67,7 @@ df["SKU_MAYUSC"] = (
 # Eliminar filas que tengan SKU vacío
 df = df[df["SKU_MAYUSC"].notna() & (df["SKU_MAYUSC"] != "")]
 # Aplicar limpieza básica y de prefijos
-df["SKU_limpio"] = df["SKU"].apply(limpiar_sku)
+df["SKU_limpio"] = df["SKU"].apply(limpiar_sku2)
 
 # Detectar multiplicadores como (X2), (X 2), etc., y convertirlos a "X2"
 df['SKU_limpio'] = df['SKU_limpio'].str.replace(r'\(\s*[Xx]\s*(\d{1,3})\s*\)', r' X\1', regex=True)

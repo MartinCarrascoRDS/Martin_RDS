@@ -55,6 +55,7 @@ if estados_filtrados:
     output_path = f'{output_folder}/Paso10_{cuenta_meli}_{fecha}_completo.xlsx'
 
     df_filtrado = df[df['SKU_faltante'] == "Sin SKU faltante"].copy()
+    print(len(df_filtrado))
     df_faltantes = df[df['SKU_faltante'] == "SKU faltante"].copy()
 
     print(f"Existen {df_filtrado.shape[0]} registros sin SKU faltante.")

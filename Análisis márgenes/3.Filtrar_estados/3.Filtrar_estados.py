@@ -55,10 +55,10 @@ os.makedirs(output_folder, exist_ok = True)
 if filtrar_estados:
     df = df[df['Estado'].apply(lambda x: any(x.startswith(p) for p in inicios_estados_deseados))].reset_index(drop = True)
     print(f"Se filtraron {len(df)} registros con estados deseados.")
-    output_path = f'{output_folder}/Paso3_{cuenta_meli}_{fecha}_listo.xlsx'
+    output_path = f'{output_folder}/{fecha} {cuenta_meli} VENTAS.xlsx'
 else:
     print('No se filtrarán los estados')
     print(f'Existen {len(df)} datos')
-    output_path = f'{output_folder}/Paso3_{cuenta_meli}_{fecha}_omitido.xlsx'
+    output_path = f'{output_folder}/{fecha} {cuenta_meli} VENTAS ESF.xlsx'
 
 df.to_excel(output_path, index = False)
