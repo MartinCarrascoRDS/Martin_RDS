@@ -5,11 +5,16 @@ Separar los SKU de cada uno de los productos en distintas columnas según el sep
 
 import pandas as pd
 import re
+from pipeline.procesamiento.funciones_para_analisis_margen import extraer_año_desde_fecha
 
-archivo_venta = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/5.Limpieza_sku/Paso5_listo.xlsx'
+cuenta_meli = input('Indique la cuenta de Mercado Libre a la que corresponde este análisis (ejemplo: BLACKPARTS): ')
+fecha = input('Indique la fecha del análisis (ejemplo: JUNIO 2025): ')
+año = extraer_año_desde_fecha(fecha)
+
+archivo_venta = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/5.Limpieza_sku/{año}/{fecha}/{fecha} {cuenta_meli} VENTAS.xlsx'
 hoja_venta = 'Sheet1'
 
-df = pd.read_excel(archivo_venta, sheet_name = hoja_venta, dtype = {'# de venta': str})
+df = pd.read_excel(archivo_venta, sheet_name = hoja_venta, dtype = {'# de venta': str, 'No. Paquete': str})
 
 def expand_sku(sku):
     if pd.isna(sku):

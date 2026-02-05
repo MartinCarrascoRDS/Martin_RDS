@@ -7,15 +7,18 @@ Pensado especialmente para el paso 9, que se encuentra en /Users/martincarrasco/
 
 import pandas as pd
 
-# descuentos_importadoras = {
-#     'MA': 0.05,
-#     'RX': 0.10,
-#     'CR': 0.03,
-#     'AL': 0.04,
-#     'NC': 0.04
-# }
+descuentos_importadoras = {
+    'MA': 0.05,
+    'CR': 0.03,
+    'AL': 0.03,
+    'RX': 0.08,
+    'IT': 0.05,
+    'ATM': 0.05,
+    'GAB': 0.05,
+    'TEC': 0.05
+}
 
-descuentos_importadoras = {} # Se deja vacío cuando no hay un descuento de tipo cyber
+# descuentos_importadoras = {} # Se deja vacío cuando no hay un descuento de tipo cyber
 
 def aplicar_descuentos(df, fecha_col, fecha_inicio, fecha_fin, descuentos_dict, activar=True, reglas_extra=None):
     if not activar:

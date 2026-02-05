@@ -1,0 +1,16 @@
+"""
+CASO ESPECIAL: Unión de archivos 01/09 - 07/09 y 08/09 - 30/09
+"""
+
+import pandas as pd
+
+sept1 = pd.read_excel('/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/1.Leer_df_eliminar_paquetes/1.2.Detectar_estados/2025/SEPTIEMBRE 2025 (HASTA 07-09)/SEPTIEMBRE 2025 (HASTA 07-09) CONSOLIDADO VENTAS TOTALES.xlsx', dtype = {"# de venta": str})
+sept2 = pd.read_excel('/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/1.Leer_df_eliminar_paquetes/1.2.Detectar_estados/2025/SEPTIEMBRE 2025 (0830)/SEPTIEMBRE 2025 (0830) CONSOLIDADO VENTAS TOTALES.xlsx', dtype = {"# de venta": str})
+
+dfs = [sept1, sept2]
+
+sept = pd.concat(dfs, ignore_index = True)
+print(sept.shape)
+
+output_path = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/1.Leer_df_eliminar_paquetes/1.2.Detectar_estados/2025/SEPTIEMBRE 2025/SEPTIEMBRE 2025 CONSOLIDADO VENTAS TOTALES.xlsx'
+sept.to_excel(output_path, index = False)

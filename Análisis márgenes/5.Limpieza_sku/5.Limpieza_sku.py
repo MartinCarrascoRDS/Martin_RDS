@@ -6,12 +6,17 @@ hacer el cruce con las bases de costo
 
 import pandas as pd
 import re
-from pipeline.procesamiento.funciones_para_analisis_margen import limpiar_sku
+import os
+from pipeline.procesamiento.funciones_para_analisis_margen import limpiar_sku, extraer_año_desde_fecha
+
+cuenta_meli = input('Indique la cuenta de Mercado Libre a la que corresponde este análisis (ejemplo: BLACKPARTS): ')
+fecha = input('Indique la fecha del análisis (ejemplo: JUNIO 2025): ')
+año = extraer_año_desde_fecha(fecha)
 
 archivo_venta = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/4.Forzar_formatos/Paso4_listo.xlsx'
 hoja_venta = 'Sheet1'
 
-df = pd.read_excel(archivo_venta, sheet_name = hoja_venta, dtype = {'# de venta': str})
+df = pd.read_excel(archivo_venta, sheet_name = hoja_venta, dtype = {'# de venta': str, 'No. Paquete': str})
 
 """df["SKU_MAYUSC"] = (
     df["SKU"]
@@ -96,5 +101,7 @@ df["Proveedor"] = df["Proveedor_siglas"].apply(lambda x: " / ".join(x))
 
 df = df.drop(columns = ['Proveedor_siglas'])
 
-output_path = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/5.Limpieza_sku/Paso5_listo.xlsx'
+output_folder = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/5.Limpieza_sku/{año}/{fecha}'
+os.makedirs(output_folder, exist_ok = True)
+output_path = f'{output_folder}/{fecha} {cuenta_meli} VENTAS.xlsx'
 df.to_excel(output_path, index = False)

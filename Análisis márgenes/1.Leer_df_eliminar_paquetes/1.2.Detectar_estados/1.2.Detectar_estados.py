@@ -48,7 +48,7 @@ def clasificar_estado(estado):
         if estado.startswith(inicio):
             return 'Venta'
         
-    if any(palabra in estado_lower for palabra in ['devolución', 'devuelto', 'devolvió', 'devolveremos']):
+    if any(palabra in estado_lower for palabra in ['devolución', 'devuelto', 'devolvió', 'devolveremos', 'te entregamos el producto']):
         return 'Devolución'
     
     if any(palabra in estado_lower for palabra in ['reclamo', 'venta con solicitud de cambio']):
@@ -60,7 +60,7 @@ def clasificar_estado(estado):
     if 'no entregado' in estado_lower and not estado.startswith('Venta no entregada. Te dimos el dinero'):
         return 'Reclamo'
     
-    if any(palabra in estado_lower for palabra in ['cancelaste', 'cancelada', 'cancelado', 'paquete no entregado']):
+    if any(palabra in estado_lower for palabra in ['cancelaste', 'cancelada', 'cancelado', 'paquete no entregado', 'venta no entregada']):
         return 'Cancelado'
     
     return "Otro"

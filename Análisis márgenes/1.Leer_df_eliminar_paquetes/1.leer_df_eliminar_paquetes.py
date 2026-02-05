@@ -1,95 +1,175 @@
-"""
-Paso 1:
-Leer un archivo excel donde se encuentren las ventas como dataframe, y eliminar las ventas en paquete.
-Calcular las ventas totales, las ventas en paquete, y el porcentaje que estas últimas representan.
-Aislar ventas en paquete, y ventas totales (considerando paquete)
-"""
-
-import pandas as pd
-import numpy as np
-from openpyxl import load_workbook
-import re
 import os
-from pipeline.procesamiento.procesamiento_bases import convertir_fechas
+import re
+import numpy as np
+import pandas as pd
+from openpyxl import load_workbook
+from pipeline.procesamiento.funciones_para_analisis_margen import extraer_numero_de_paquetes, extraer_año_desde_fecha, convertir_fechas
 
-def extraer_numero_de_paquetes(estado_str):
-    match = re.search(r"Paquete de (\d+)", str(estado_str))
-    return int(match.group(1)) if match else 0
+# -------------------------------------------------------------------------
+# Carga de archivo
+# -------------------------------------------------------------------------
 
-año = 2025 # RECORDAR CAMBIAR EL AÑO PARA GENERAR NUEVAS CARPETAS
 cuenta_meli = input('Indique la cuenta de Mercado Libre a la que corresponde este análisis (ejemplo: BLACKPARTS): ')
 fecha = input('Indique la fecha del análisis (ejemplo: JUNIO 2025): ')
+año = extraer_año_desde_fecha(fecha)
 
 archivo_venta = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/{año}/Cuentas RDS/{cuenta_meli}/VENTAS {cuenta_meli} {fecha}.xlsx'
 hoja_venta = 'Ventas CL'
 skiprows = 5
-df = pd.read_excel(archivo_venta, sheet_name = hoja_venta, skiprows = skiprows, dtype = {"# de venta": str})
+
+df = pd.read_excel(
+    archivo_venta,
+    sheet_name=hoja_venta,
+    skiprows=skiprows,
+    dtype={"# de venta": str}
+)
+
 print(f"Existen {df['# de venta'].nunique()} registros en la base de datos de ventas")
 
+# Formato fecha
 if 'Fecha de venta' in df.columns:
     df['Fecha de venta'] = df['Fecha de venta'].apply(convertir_fechas)
 
-df['Forma de entrega'] = df['Forma de entrega'].replace(r'^\s*$', np.nan, regex=True)
-df["Forma de entrega"] = df["Forma de entrega"].fillna(method = 'ffill')
+# FFill en "Forma de entrega"
+df["Forma de entrega"] = df["Forma de entrega"].replace(r'^\s*$', np.nan, regex=True)
+df["Forma de entrega"] = df["Forma de entrega"].fillna(method='ffill')
 
-df_ingresos = df[["# de venta", "Fecha de venta", "Estado", "Unidades", "SKU", "# de publicación", "Canal de venta", "Título de la publicación", "Precio unitario de venta de la publicación (CLP)", "Forma de entrega"]]
-df_ingresos["Cuenta Meli"] = cuenta_meli
+df['Tipo de venta'] = 'Unitaria'
 
-output_folder = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/1.Leer_df_eliminar_paquetes/{año}/{fecha}'
-os.makedirs(output_folder, exist_ok = True)
+df['Ingresos por productos (CLP)'] = df['Ingresos por productos (CLP)'].fillna(
+    df['Unidades'] * df['Precio unitario de venta de la publicación (CLP)']
+)
 
-output_path_ingresos = f'{output_folder}/Paso1_totales_{cuenta_meli}_{fecha}_listo.xlsx'
-df_ingresos.to_excel(output_path_ingresos, index = False)
+# -------------------------------------------------------------------------
+# Detectar paquetes usando el color de fondo
+# -------------------------------------------------------------------------
 
-wb = load_workbook(archivo_venta, data_only = True)
-ws = wb[hoja_venta] if hoja_venta else wb.active
+wb = load_workbook(archivo_venta, data_only=True)
+ws = wb[hoja_venta]
+
 idx_estado = list(df.columns).index('Estado')
 estados_backrounds = []
-encabezado_fila_excel = skiprows + 1
-for row in ws.iter_rows(min_row = encabezado_fila_excel + 1, max_row = ws.max_row):
+
+inicio_datos_excel = skiprows + 1
+
+for row in ws.iter_rows(min_row=inicio_datos_excel + 1, max_row=ws.max_row):
     cell = row[idx_estado]
     fill = cell.fill
     color = fill.fgColor.rgb if fill and fill.fgColor and fill.fgColor.type == "rgb" else None
     estados_backrounds.append(color)
 
-paquete_indices_todos = []
-encabezados_indices = []
+# -------------------------------------------------------------------------
+# Identificar bloques de paquete
+# -------------------------------------------------------------------------
+
+paquete_encabezados = []
+paquete_indices = []  # TODAS las filas del rango paquete
+
 i = 0
 while i < len(df):
-    fondo_actual = estados_backrounds[i]
-    estado_valor = str(df.iloc[i]['Estado'])
-    if fondo_actual and fondo_actual != "00000000" and "Paquete de" in estado_valor:
-        n_items = extraer_numero_de_paquetes(estado_valor)
-        rango_paquete = list(range(i, i + n_items + 1))
-        paquete_indices_todos.extend(rango_paquete)
-        encabezados_indices.append(i)
+    fondo = estados_backrounds[i]
+    estado_txt = str(df.iloc[i]['Estado'])
+
+    if fondo and fondo != "00000000" and "Paquete de" in estado_txt:
+        n_items = extraer_numero_de_paquetes(estado_txt)
+        rango = list(range(i, i + n_items + 1))
+        paquete_indices.extend(rango)
+        paquete_encabezados.append(i)
         i += n_items + 1
     else:
         i += 1
 
-print(f'Hubo {len(encabezados_indices)} ventas en paquete')
+print(f"Hubo {len(paquete_encabezados)} ventas en paquete")
 
-df_encabezados = pd.read_excel(archivo_venta, sheet_name = hoja_venta, skiprows = skiprows, dtype = {"# de venta": str})
-df_encabezados = df_encabezados.iloc[encabezados_indices].copy()
-df_paquetes = df_encabezados[["# de venta", "Fecha de venta", "Ingresos por productos (CLP)"]]
-df_paquetes['Cuenta Meli'] = cuenta_meli
+df.loc[paquete_indices, 'Tipo de venta'] = 'Paquete'
 
-ingreso_total = df['Ingresos por productos (CLP)'].sum()
-ingreso_paquetes = df.iloc[encabezados_indices]['Ingresos por productos (CLP)'].sum()
-porcentaje = 100 * ingreso_paquetes / ingreso_total if ingreso_total else 0
+# -------------------------------------------------------------------------
+# AGREGAR COLUMNA No. Paquete
+# -------------------------------------------------------------------------
 
-print(f'Las ventas en paquete representan el {porcentaje:.2f}% de las ventas')
+df['No. Paquete'] = "Unitaria"
 
-df = df.drop(index = paquete_indices_todos).reset_index(drop = True)
+for idx_head in paquete_encabezados:
+    estado_txt = df.at[idx_head, 'Estado']
 
-df['# de venta'] = df['# de venta'].astype(str)
+    m = re.search(r"Paquete de (\d+)", estado_txt)
+    if not m:
+        continue
 
-df = df[df["Ingresos por productos (CLP)"].notna()]
+    n_items = int(m.group(1))
+    no_venta = df.at[idx_head, "# de venta"]
 
-print(f"Existen {df['# de venta'].nunique()} registros en la base de datos de ventas sin contar las ventas en paquete, y con un ingreso válido")
+    for i in range(1, n_items + 1):
+        fila = idx_head + i
+        if fila in df.index:
+            df.at[fila, "No. Paquete"] = no_venta
 
-output_path = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/1.Leer_df_eliminar_paquetes/Paso1_listo.xlsx'
-df.to_excel(output_path, index=False)
+df['No. Paquete'] = df['No. Paquete'].astype(str)
 
-output_path_paquetes = f'{output_folder}/{fecha} {cuenta_meli} VENTAS PAQUETE.xlsx'
-df_paquetes.to_excel(output_path_paquetes, index = False)
+# -------------------------------------------------------------------------
+# PRORRATEO COMPLETO A CADA PRODUCTO DEL PAQUETE
+# -------------------------------------------------------------------------
+
+df_prorrateado = []
+
+for idx_head in paquete_encabezados:
+
+    fila_head = df.loc[idx_head]
+    n_items = extraer_numero_de_paquetes(fila_head["Estado"])
+    filas_items = df.loc[idx_head+1 : idx_head+n_items].copy()
+
+    if filas_items.empty:
+        continue
+
+    total_ingresos = filas_items["Unidades"] * filas_items["Precio unitario de venta de la publicación (CLP)"]
+    suma_ingresos = total_ingresos.sum()
+
+    if suma_ingresos == 0:
+        continue
+
+    filas_items["% participación"] = total_ingresos / suma_ingresos
+
+    costos_prorratear = [
+        "Cargo por venta e impuestos (CLP)",
+        "Ingresos por envío (CLP)",
+        "Costos de envío (CLP)"
+    ]
+
+    for col in costos_prorratear:
+        filas_items[col] = filas_items["% participación"] * fila_head[col]
+
+    filas_items = filas_items.drop(columns=["% participación"])
+
+    df_prorrateado.append(filas_items)
+
+df_prorrateado = pd.concat(df_prorrateado, ignore_index=True) if df_prorrateado else pd.DataFrame()
+
+# -------------------------------------------------------------------------
+# Remover filas originales de paquete y reemplazar por prorrateo
+# -------------------------------------------------------------------------
+
+df_clean = df.drop(index=paquete_indices).reset_index(drop=True)
+df_final = pd.concat([df_clean, df_prorrateado], ignore_index=True)
+
+indices_cambio = df_final.index[df_final['Estado'] == 'Venta con solicitud de cambio']
+for idx in indices_cambio:
+    df_final.at[idx, 'Tipo de venta'] = 'Cambio'
+    if idx + 1 in df_final.index:
+        df_final.at[idx + 1, 'Tipo de venta'] = 'Cambio'
+    if idx + 2 in df_final.index:
+        df_final.at[idx + 2, 'Tipo de venta'] = 'Cambio'
+
+df_final = df_final[df_final['Tipo de venta'] != 'Cambio'].copy()
+
+print(f"Registros finales luego de integrar paquetes: {df_final.shape[0]}")
+
+# -------------------------------------------------------------------------
+# Exportar resultados
+# -------------------------------------------------------------------------
+
+output_folder = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/1.Leer_df_eliminar_paquetes/{año}/{fecha}'
+os.makedirs(output_folder, exist_ok=True)
+output_path = f'{output_folder}/{fecha} {cuenta_meli} TOTAL VENTAS.xlsx'
+df_final.to_excel(output_path, index=False)
+
+print("Proceso completado con éxito.")

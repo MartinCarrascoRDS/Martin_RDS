@@ -5,9 +5,9 @@ Valores netos donde corresponda
 """
 
 import pandas as pd
-import numpy as np
 import re
 import os
+from pipeline.procesamiento.funciones_para_analisis_margen import limpiar_sku
 
 cuenta_meli = input('Indique la cuenta de Mercado Libre a la que corresponde este análisis (ejemplo: BLACKPARTS): ')
 fecha = input('Indique la fecha del análisis (ejemplo: JUNIO 2025): ')
@@ -29,7 +29,16 @@ df = pd.read_excel(archivo_ventas, sheet_name = hoja_ventas, dtype = {"# de vent
 #     ]
 #     return " / ".join(partes_limpias)
 
-df = df[df['SKU'].notna()]
+df["SKU_MAYUSC"] = (
+    df["SKU"]
+    .astype(str)
+    .str.upper()
+    .str.strip()
+)
+
+df = df[df["SKU_MAYUSC"].notna() & (df["SKU_MAYUSC"] != "")]
+
+df["SKU_limpio"] = df["SKU"].apply(limpiar_sku)
 
 # def limpiar_sku(sku):
 #     """Limpia prefijos 'F- ' y  'XX- ' al inicio de cada fragmento separado por '/'. """
@@ -43,8 +52,8 @@ df = df[df['SKU'].notna()]
 #     ]
 #     return " / ".join(partes_limpias)
 
-def limpiar_sku2(sku):
-    """Limpia 'F- ', 'XX- ' y 'Z- ' en cualquier parte de cada fragmento separado por '/'. """
+"""def limpiar_sku2(sku):
+    """"""Limpia 'F- ', 'XX- ' y 'Z- ' en cualquier parte de cada fragmento separado por '/'. """"""
     if pd.isna(sku):
         return sku
     sku = str(sku).upper()
@@ -57,12 +66,7 @@ def limpiar_sku2(sku):
 
 # 19/08/2025: PARA LOS PRÓXIMOS ANÁLISIS, DECIDIR USAR limpiar_sku o limpiar_sku2 (creo que limpiar_sku2 es más completo)
 
-df["SKU_MAYUSC"] = (
-    df["SKU"]
-    .astype(str)
-    .str.upper()
-    .str.strip()
-)
+
 
 # Eliminar filas que tengan SKU vacío
 df = df[df["SKU_MAYUSC"].notna() & (df["SKU_MAYUSC"] != "")]
@@ -89,7 +93,7 @@ df["SKU_limpio"] = df["SKU_limpio"].str.replace(
 )
 
 # Limpiar espacios dobles restantes
-df["SKU_limpio"] = df["SKU_limpio"].str.replace(r"\s{2,}", " ", regex=True).str.strip()
+df["SKU_limpio"] = df["SKU_limpio"].str.replace(r"\s{2,}", " ", regex=True).str.strip()"""
 
 def obtener_proveedores(sku_limpio):
     partes = str(sku_limpio).split(" / ")

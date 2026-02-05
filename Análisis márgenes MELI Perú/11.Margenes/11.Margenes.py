@@ -1,0 +1,112 @@
+"""
+Paso 11:
+Calcular los márgenes obtenidos por cada una de las ventas, generando una columna "Utilidad" que representa la diferencia entre el precio de venta y el costo final del producto.
+Con esta columna, se genera la columna "Margen" que es el resultado de dividir la utilidad por el precio de venta, y se obtienen los ponderados de cada margen por la utilidad.
+Este ejercicio será hecho solo con las utilidades positivas, las utilidades negativas serán eliminadas, pero se generará un archivo con las utilidades negativas para su revisión.
+"""
+
+import pandas as pd
+import os
+import numpy as np
+from pipeline.procesamiento.funciones_para_analisis_margen import extraer_año_desde_fecha
+
+cuenta_meli = input("Indique la cuenta de Mercado Libre a la que corresponde este análisis (ejemplo: BLACKPARTS): ")
+fecha = input("Indique la fecha del análisis (ejemplo: JUNIO 2025): ")
+año = extraer_año_desde_fecha(fecha)
+
+output_folder = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes MELI Perú/11.Margenes/{año}/{fecha}'
+os.makedirs(output_folder, exist_ok=True)
+
+def clasificar_precio(valor):
+    if 0 <= valor <= 71.9:
+        return '01 - $0-$71.9'
+    elif 71.91 <= valor <= 287.74:
+        return '02 - $71.91-$287.74'
+    elif 287.75 <= valor <= 539.49:
+        return '03 - $287.75-$539.49'
+    elif valor >= 539.5:
+        return '04 - $539.5 o más'
+
+
+archivo_ventas = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes MELI Perú/10.Eliminar_sin_costos/{año}/{fecha}/Paso10_{cuenta_meli}_{fecha}_completo.xlsx'
+hoja_ventas = 'Sheet1'
+
+df = pd.read_excel(archivo_ventas, sheet_name=hoja_ventas, dtype={'# de venta': str})
+
+df = df[df['SKU_faltante'] == 'Sin SKU faltante'].copy()
+df = df[df['Clasificación Estado'] == 'Venta'].copy()
+
+df['Rango de precio'] = df['Ingresos por productos (PEN)'].apply(clasificar_precio)
+
+df['Total costo'] = (
+    df["Costo_final_producto"] -
+    df["Cargo por venta e impuestos (PEN) Neto"] +
+    df["Costo final envío (PEN) Neto"]
+)
+
+df['Utilidad'] = np.nan
+
+mask1 = df['SKU_faltante'] == 'Sin SKU faltante'
+
+df.loc[mask1, 'Utilidad'] = (
+    df.loc[mask1, 'Ingresos por productos (PEN) Neto'] - df.loc[mask1, 'Total costo']
+)
+
+df['Margen'] = np.nan
+
+mask2 = df['Utilidad'].notna()
+df.loc[mask2, 'Margen'] = (
+    df.loc[mask2, 'Utilidad'] /
+    df.loc[mask2, 'Ingresos por productos (PEN) Neto']
+)
+
+condiciones_estrategias = [
+    df['SKU_MAYUSC'].str.contains('XX- ', na = False),
+    df['SKU_MAYUSC'].str.contains('Z- ', na = False)
+]
+
+estrategias = [
+    'Killer',
+    'Liquidación'
+]
+
+df["Estrategia Princing"] = np.select(condiciones_estrategias, estrategias, default = 'Normal')
+
+df_negativos = df[df["Utilidad"] < 0].copy()
+print(f"Hay {df_negativos.shape[0]} registros con utilidades negativas.")
+df_positivos = df[df["Utilidad"] >= 0].copy()
+print(f"Hay {df_positivos.shape[0]} registros con utilidades positivas.")
+
+utilidad_total = df["Utilidad"].sum()
+df["Ponderado"] = df["Utilidad"] / utilidad_total
+df["Margen x Ponderado"] = df["Margen"] * df["Ponderado"]
+
+utilidad_positiva_total = df_positivos["Utilidad"].sum()
+df_positivos["Ponderado"] = df_positivos["Utilidad"] / utilidad_positiva_total
+df_positivos["Margen x Ponderado"] = df_positivos["Margen"] * df_positivos["Ponderado"]
+
+utilidad_negativa_total = df_negativos["Utilidad"].sum()
+df_negativos["Ponderado"] = df_negativos["Utilidad"] / utilidad_negativa_total
+df_negativos["Margen x Ponderado"] = df_negativos["Margen"] * df_negativos["Ponderado"]
+
+# df["Cuenta Meli"] = cuenta_meli
+# df_positivos["Cuenta Meli"] = cuenta_meli
+# df_negativos["Cuenta Meli"] = cuenta_meli
+
+sku_cols = [col for col in df.columns if col.startswith("SKU_") and col[-1].isdigit()]
+df["Cantidad SKUs"] = df[sku_cols].notna().sum(axis=1)
+df_positivos["Cantidad SKUs"] = df_positivos[sku_cols].notna().sum(axis=1)
+df_negativos["Cantidad SKUs"] = df_negativos[sku_cols].notna().sum(axis=1)
+
+output_path = f'{output_folder}/{fecha} {cuenta_meli} MÁRGENES.xlsx'
+df.to_excel(output_path, index=False)
+output_path_negativos = f'{output_folder}/{fecha} {cuenta_meli} Utilidades negativas.xlsx'
+df_negativos.to_excel(output_path_negativos, index=False)
+output_path_positivos = f'{output_folder}/{fecha} {cuenta_meli} Utilidades positivas.xlsx'
+df_positivos.to_excel(output_path_positivos, index=False)
+
+print(f"Entre las utilidades totales, se obtuvo un margen promedio simple de: {df['Margen'].mean() * 100:.2f}%")
+print(f"Entre las utilidades totales, se obtuvo un margen ponderado total de: {df['Margen x Ponderado'].sum() * 100:.2f}%")
+
+print(f"Entre las utilidades positivas, se obtuvo un margen promedio simple de: {df_positivos['Margen'].mean() * 100:.2f}%")
+print(f"Entre las utilidades positivas, se obtuvo un margen ponderado total de: {df_positivos['Margen x Ponderado'].sum() * 100:.2f}%")

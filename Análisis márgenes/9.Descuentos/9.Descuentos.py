@@ -18,12 +18,12 @@ import re
 archivo_venta = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/8.Cruzar_costos_gral/Paso8_listo.xlsx'
 hoja_venta = 'Sheet1'
 
-df_ventas = pd.read_excel(archivo_venta, sheet_name=hoja_venta, dtype={'# de venta': str})
+df_ventas = pd.read_excel(archivo_venta, sheet_name=hoja_venta, dtype={'# de venta': str, 'No. Paquete': str})
 
 ACTIVAR_DESCUENTOS = False  # Cambia a False si no quieres aplicar descuentos
 
-fecha_inicio = pd.Timestamp('2025-06-02')
-fecha_fin = pd.Timestamp('2025-06-08')
+fecha_inicio = pd.Timestamp('2025-12-01')
+fecha_fin = pd.Timestamp('2025-12-05')
 
 reglas_adicionales = [
     lambda row: descuento_sku_prefijo(
@@ -31,8 +31,8 @@ reglas_adicionales = [
         prefijo='CR- ',
         porcentaje=0.03,
         fecha_col='Fecha de venta',
-        fecha_inicio=pd.Timestamp('2025-07-28'),
-        fecha_fin=pd.Timestamp('2025-07-31'),
+        fecha_inicio=pd.Timestamp('2025-09-08'),
+        fecha_fin=pd.Timestamp('2025-09-10'),
         excluir_full = True
     )
 ]

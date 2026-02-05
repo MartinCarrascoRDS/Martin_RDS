@@ -260,13 +260,13 @@ def procesar_para_powerBI(path_csv, año, fecha_ultima_venta, mercado, producto 
     
     df.rename(columns = {
         'Titulo_Publicacion': 'Producto',
-        'sku': 'SKU',
+        #'sku': 'SKU',
         'level3': 'Categoría',
         'level4': 'Subcategoría',
         'Periodo.Mes': 'Mes',
         'Nombre_Vendedor': 'Seller',
         'Volumen_de_Ventas_Moneda_Local': 'Ventas',
-        'Cancelaciones_Moneda_Local': 'Cancelaciones'
+        #'Cancelaciones_Moneda_Local': 'Cancelaciones'
     }, inplace = True)
 
     if 'Producto' in df.columns:
@@ -377,13 +377,14 @@ def procesar_para_powerBI(path_csv, año, fecha_ultima_venta, mercado, producto 
             
         return "-"
     
-    df['Proveedor'] = df.apply(lambda row: extraer_proveedor(row['SKU'], row['Seller']), axis = 1)
+    if {'SKU', 'Seller'}.issubset(df.columns):
+        df['Proveedor'] = df.apply(lambda row: extraer_proveedor(row['SKU'], row['Seller']), axis=1)
 
-    cols = list(df.columns)
-    cols.remove('Proveedor')
-    mercado_index = cols.index('Mercado')
-    cols.insert(mercado_index + 1, 'Proveedor')
-    df = df[cols]
+        cols = list(df.columns)
+        cols.remove('Proveedor')
+        mercado_index = cols.index('Mercado')
+        cols.insert(mercado_index + 1, 'Proveedor')
+        df = df[cols]
 
     nombre_partes = [f'Ventas_procesadas_mercado_de_{mercado}']
 

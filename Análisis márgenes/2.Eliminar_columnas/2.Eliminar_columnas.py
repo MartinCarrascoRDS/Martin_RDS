@@ -5,10 +5,16 @@ Asegurarse de que no hayan espacios innecesarios antes o después de la columna 
 """
 
 import pandas as pd
+import os
+from pipeline.procesamiento.funciones_para_analisis_margen import extraer_año_desde_fecha
 
-archivo_venta = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/1.Leer_df_eliminar_paquetes/Paso1_listo.xlsx'
+cuenta_meli = input('Indique la cuenta de Mercado Libre a la que corresponde este análisis (ejemplo: BLACKPARTS): ')
+fecha = input('Indique la fecha del análisis (ejemplo: JUNIO 2025): ')
+año = extraer_año_desde_fecha(fecha)
+
+archivo_venta = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/1.Leer_df_eliminar_paquetes/{año}/{fecha}/{fecha} {cuenta_meli} TOTAL VENTAS.xlsx'
 hoja_venta = 'Sheet1'
-df = pd.read_excel(archivo_venta, sheet_name = hoja_venta, dtype = {'# de venta': str})
+df = pd.read_excel(archivo_venta, sheet_name = hoja_venta, dtype = {'# de venta': str, 'No. Paquete': str})
 
 print(f"Registros antes del paso 2: {len(df)}")
 
@@ -20,7 +26,7 @@ columnas_eliminar = [
         "Descripción del estado", "Paquete de varios productos", "Pertenece a un kit",
         "Anulaciones y reembolsos (CLP)", "Total (CLP)",
         "Precio unitario de venta de la publicación (CLP)",
-        "Mes de facturación de tus cargos", "Venta por publicidad",
+        "Mes de facturación de tus cargos",
         "Tienda oficial", "Variante", "Tipo de publicación", "Factura adjunta",
         "Datos personales o de empresa", "Tipo y número de documento", "Dirección",
         "Tipo de contribuyente", "Actividad económica", "Comprador", "Negocio", "Cédula",
@@ -28,7 +34,7 @@ columnas_eliminar = [
         "Transportista", "Número de seguimiento", "URL de seguimiento",
         "Revisado por Mercado Libre", "Fecha de revisión",
         "Dinero a favor", "Resultado", "Destino", "Motivo del resultado",
-        "Reclamo abierto", "Reclamo cerrado", "Con mediación"
+        "Reclamo abierto", "Reclamo cerrado", "Con mediación", "Depósito"
     ]
 
 for col in df.columns:
@@ -56,5 +62,6 @@ posteriormente unas lineas de código para evitar que se eliminen ciertas column
 nombre que otras que si se desean eliminar, en este caso, Estado, Unidades y Forma de entrega.
 """   
 
-output_path = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/2.Eliminar_columnas/Paso2_listo.xlsx'
-df.to_excel(output_path, index = False)
+output_path = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/2.Eliminar_columnas/{año}/{fecha}'
+os.makedirs(output_path, exist_ok = True)
+df.to_excel(f'{output_path}/{fecha} {cuenta_meli} paso 2.xlsx', index = False)

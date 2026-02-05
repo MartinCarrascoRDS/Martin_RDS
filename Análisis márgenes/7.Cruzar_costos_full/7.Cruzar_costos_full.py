@@ -9,16 +9,18 @@ from pipeline.procesamiento.funciones_para_analisis_margen import limpiar_sku
 
 archivo_venta = '/Users/martincarrasco/Desktop/Martín_Carrasco/Análisis márgenes/6.Separar_sku/Paso6_listo.xlsx'
 hoja_venta = 'Sheet1'
-archivo_costo = '/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/2025/Cuentas RDS/COSTOS PARA CRUCE/Costos para cruce al 2025-09-01.xlsx'
+archivo_costo = '/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/COSTOS PARA CRUCE/Costos para cruce al 2026-02-01.xlsx'
 hoja_costo = 'CostosFull'
 
-df_ventas = pd.read_excel(archivo_venta, sheet_name=hoja_venta, dtype={'# de venta': str})
+df_ventas = pd.read_excel(archivo_venta, sheet_name=hoja_venta, dtype={'# de venta': str, 'No. Paquete': str})
 df_costos = pd.read_excel(archivo_costo, sheet_name=hoja_costo)
 
 print(len(df_ventas))
 df_costos['SKU'] = df_costos['SKU'].apply(limpiar_sku)
 
+
 df_costos_limpio = df_costos[['SKU', 'PRECIO CONFIRMADO']].copy()
+print(df_costos_limpio.head())
 
 duplicados_ventas = df_ventas.duplicated(subset=['# de venta'], keep='first')
 if duplicados_ventas.any():

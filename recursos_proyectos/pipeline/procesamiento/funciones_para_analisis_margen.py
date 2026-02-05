@@ -26,6 +26,19 @@ def extraer_numero_de_paquetes(estado_str):
     match = re.search(r"Paquete de (\d+)", str(estado_str))
     return int(match.group(1)) if match else 0
 
+def extraer_año_desde_fecha(fecha):
+    """
+    Extrae el año de una fecha para poder leerla correctamente en los directorios.
+
+    Argumentos:
+    fecha (str): Cadena de texto que contiene la fecha de las ventas en formato 'MES AÑO' (ENERO 2026, FEBRERO 2025, SEPTIEMBRE 2025 (HASTA 07-09), etc.)
+    """
+
+    match = re.search(r'(20\d{2})', fecha)
+    if not match:
+        raise ValueError(f'No se pudo extraer el año a partir de la fecha {fecha}')
+    return int(match.group(1))
+
 meses_es = {
         'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
         'mayo': '05', 'junio': '06', 'julio': '07', 'agosto': '08',
@@ -64,7 +77,7 @@ def limpiar_sku(sku):
     sku (str): el SKU a limpiar.
     Retorna:
     str: el SKU limpio para el formato RDS.
-    """
+"""
 
     # Si el SKU es NaN, retornar NaN
     if pd.isna(sku):
@@ -80,6 +93,13 @@ def limpiar_sku(sku):
         for parte in partes
     ]
     sku_limpio = " / ".join(partes_limpias)
+
+    # Insertar espacio si el formato es como "RX-9951960"
+    sku = re.sub(r'([A-Z]+-)(\d)', r'\1 \2', sku)
+
+    # Eliminar " / " solo si está antes de un multiplicador tipo X2, X3, X4...
+    # Ejemplo: "RX- 0020611 / X2" → "RX- 0020611 X2"
+    sku = re.sub(r'\s*/\s*(X\d+)\b', r' \1', sku)
 
     # Detectar multiplicadores tipo (X2), (X 2), etc. y convertirlos a "X2"
     sku_limpio = re.sub(r"\(\s*[Xx]\s*(\d{1,3})\s*\)", r" X\1", sku_limpio)
@@ -100,6 +120,105 @@ def limpiar_sku(sku):
     sku_limpio = re.sub(r"\s{2,}", " ", sku_limpio).strip()
 
     return sku_limpio
+
+# def limpiar_sku(sku):
+#     """
+#     Limpia prefijos 'F-', 'XX-' y 'Z-' en cualquier parte de cada fragmento separado por '/',
+#     normaliza multiplicadores, elimina paréntesis y espacios innecesarios.
+
+#     Args:
+#         sku (str): el SKU a limpiar.
+
+#     Returns:
+#         str | pd.NA: el SKU limpio para el formato RDS.
+#     """
+#     import re
+#     import pandas as pd
+
+#     # Normalización de casos nulos o vacíos
+#     if sku is None:
+#         return pd.NA
+#     sku_str = str(sku).strip()
+#     if sku_str == "" or sku_str.upper() in {"NAN", "NONE"}:
+#         return pd.NA
+
+#     # Trabajar sobre una sola variable consistente
+#     sku = sku_str.upper().strip()
+
+#     # 1) Separar por "/" y procesar cada fragmento
+#     partes = re.split(r"\s*/\s*", sku)
+#     partes_limpias = []
+#     for parte in partes:
+#         p = parte.strip()
+
+#         # Eliminar prefijos: F-, XX-, Z-
+#         p = re.sub(r'\b(?:F|XX|Z)-\s*', '', p)
+
+#         # Insertar espacio si formato "RX-9951960"
+#         p = re.sub(r'([A-Z]+-)(?=\d)', r'\1 ', p)
+
+#         # Quitar "/ X2" -> " X2"
+#         p = re.sub(r'\s*/\s*(X\d+)\b', r' \1', p, flags=re.IGNORECASE)
+
+#         partes_limpias.append(p)
+
+#     # Reunir con " / "
+#     sku_limpio = " / ".join([pt for pt in partes_limpias if pt != ""])
+
+#     # Normalizaciones globales
+#     sku_limpio = re.sub(r"\(\s*[Xx]\s*(\d{1,3})\s*\)", r" X\1", sku_limpio)
+#     sku_limpio = re.sub(r"\([^)]*\)", "", sku_limpio).strip()
+#     sku_limpio = re.sub(r"\s*/\s*", " / ", sku_limpio)
+#     sku_limpio = re.sub(r"\bX\s+(\d+)\b", r"X\1", sku_limpio, flags=re.IGNORECASE)
+#     sku_limpio = re.sub(r"(?<!/)\s(?=[A-Z]{2,6}-\s)", " / ", sku_limpio)
+#     sku_limpio = re.sub(r"\s{2,}", " ", sku_limpio).strip()
+#     sku_limpio = re.sub(r"^\d+W-\s*", "", sku_limpio, flags=re.IGNORECASE)
+
+#     if sku_limpio == "":
+#         return pd.NA
+
+#     return sku_limpio
+
+def limpiar_sku_walmart(sku):
+    """
+    Limpia códigos SKU provenientes de Walmart, que siguen la siguiente estructura:
+    <código interno walmart>- <código proveedor>- <código producto proveedor> / <multiplicador>
+
+    Ejemplo de input:
+    '1W- RX- 235236'
+    '12W- IT- 233634 / X2'
+
+    Pasos:
+    1. Convertir a mayúsculas
+    2. Eliminar código interno walmart
+    3. Eliminar / antes del multiplicador, para que este quede separado del SKU con un espacio ("IT- 233634 X2")
+    4. Pasos similares a la función limpiar_sku
+    """
+
+    if not isinstance(sku, str):
+        return sku
+    
+    sku = sku.upper()
+
+    sku = re.sub(r'\b\d{1,3}W-\s*', '', sku)
+
+    sku = re.sub(r'^([A-Z]{2})-([A-Z0-9])', r'\1- \2', sku)
+
+    multiplicador = re.search(r'/\s*X(\d+)', sku)
+    mult_text = ""
+    if multiplicador:
+        valor = multiplicador.group(1)
+        mult_text = f" X{valor}"
+        sku = re.sub(r'/\s*X\d+', '', sku)
+
+    sku = re.sub(r'[^A-Z0-9\- ]', '', sku)
+
+    sku = re.sub(r'\s{2,}', ' ', sku).strip()
+
+    sku = sku + mult_text
+
+    return sku
+
 
 def obtener_proveedores(sku_limpio):
     """

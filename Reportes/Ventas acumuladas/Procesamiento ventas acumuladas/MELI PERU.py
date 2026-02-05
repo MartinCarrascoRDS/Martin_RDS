@@ -7,79 +7,106 @@ El excel actualmente tiene la información en formato presentación, por lo que 
 """
 
 import pandas as pd
+import numpy as np
 
 fecha = input('Ingrese la fecha de corte (YYYY-MM-DD): ')
 fecha_anterior = input('Ingrese la fecha de corte del año anterior (YYYY-MM-DD): ')
-path_ventas = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/VENTAS ACUMULADAS 09-SEPTIEMBRE-25 {fecha}.xlsx'
+path_ventas = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/VENTAS ACUMULADAS {fecha}.xlsx'
 fecha_limite = pd.to_datetime(fecha)
 
-# 2024
-
-# Leer desde la columna B hasta la columna P
-ventas_2024 = pd.read_excel(path_ventas, sheet_name = 'MELI PERÙ', header = 3, usecols = 'B:P')
-
-# Limpiar fechas
-ventas_2024['FECHA'] = pd.to_datetime(ventas_2024['FECHA'], errors = 'coerce')
-ventas_2024 = ventas_2024.dropna(subset = ["FECHA"])
-ventas_2024 = ventas_2024[ventas_2024['FECHA'].dt.year == 2024]
-
-# Renombrar
-columnas = [
-    "FECHA", "CANTIDAD DE VENTAS", "ACUMULADO DE VENTAS", "VAR % CANTIDAD DE VENTAS",
-    "MONTO DE VENTAS (PEN)", "ACUMULADO DE MONTO (PEN)", "VAR % MONTO DE VENTAS",
-    "UNIDADES", "ACUMULADO DE UNIDADES", "VAR % UNIDADES",
-    "TICKET PROMEDIO (PEN)", "VISITAS", "CONVERSIÓN", "MONTO DE VENTAS",
-    "TICKET PROMEDIO", "ORIGEN"
-]
-
-columnas_acumulados = [
-    "ACUMULADO DE VENTAS", "ACUMULADO DE MONTO (PEN)", "ACUMULADO DE UNIDADES"
-]
-
-peru_2024 = ventas_2024.copy()
-peru_2024['ORIGEN'] = 'MELI PERU'
-peru_2024.columns = columnas
-
-peru_2024 = peru_2024.drop(columns = columnas_acumulados, axis = 1)
-# Castigos por devolución, cancelación y reclamo
-for col in ['CANTIDAD DE VENTAS', 'MONTO DE VENTAS', 'UNIDADES']:
-    peru_2024[col] = pd.to_numeric(peru_2024[col], errors = 'coerce')
-
-peru_2024['CANTIDAD DE VENTAS'] = (peru_2024['CANTIDAD DE VENTAS'] * 0.9).round(0).astype(int)
-peru_2024['MONTO DE VENTAS'] = peru_2024['MONTO DE VENTAS'] * 0.9
-peru_2024['UNIDADES'] = (peru_2024['UNIDADES'] * 0.9).round(0).astype(int)
-
-# Guardar
-output_folder = '/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/MELI PERU'
-peru_2024.to_excel(f'{output_folder}/VENTAS ACUMULADAS MELI PERU {fecha_anterior}.xlsx', index = False)
-
+# Detectar dinámicamente filas de inicio de 2025 y 2026
+raw = pd.read_excel(path_ventas, sheet_name="MELI PERÙ", header=None, dtype=str)
+filas_fecha = raw.index[raw.apply(lambda row: row.astype(str).str.contains("FECHA").any(), axis=1)].tolist()
 
 # 2025
 
 # Leer desde la columna B hasta la columna P
-ventas_2025 = pd.read_excel(path_ventas, sheet_name = 'MELI PERÙ', header = 40, usecols = 'B:P')
+fila_inicio_2025 = filas_fecha[0]
+ventas_2025 = pd.read_excel(path_ventas, sheet_name = 'MELI PERÙ', header = fila_inicio_2025, usecols = 'B:U')
 
 # Limpiar fechas
-ventas_2025["FECHA"] = pd.to_datetime(ventas_2025['FECHA'], errors = 'coerce')
-ventas_2025 = ventas_2025.dropna(subset = ['FECHA'])
-ventas_2025 = ventas_2025[
-    (ventas_2025['FECHA'].dt.year == 2025) &
-    (ventas_2025['FECHA'] <= fecha_limite)
+ventas_2025['FECHA'] = pd.to_datetime(ventas_2025['FECHA'], errors = 'coerce')
+ventas_2025 = ventas_2025.dropna(subset = ["FECHA"])
+ventas_2025 = ventas_2025[ventas_2025['FECHA'].dt.year == 2025]
+
+# Renombrar
+columnas = [
+    "FECHA", "CANTIDAD DE VENTAS PRE CASTIGO", "CANTIDAD DE VENTAS", "ACUMULADO DE VENTAS", "VAR % CANTIDAD DE VENTAS",
+    "MONTO DE VENTAS (PEN) BRUTO PRE CASTIGO", "MONTO DE VENTAS (PEN)", "ACUMULADO DE MONTO (PEN)", "VAR % MONTO DE VENTAS (PEN)",
+    "UNIDADES PRE CASTIGO", "UNIDADES", "ACUMULADO DE UNIDADES", "VAR % UNIDADES",
+    "TICKET PROMEDIO (PEN)", "VAR % TICKET PROMEDIO", "VISITAS", "CONVERSIÓN",
+    "MONTO DE VENTAS", "ACUMULADO DE MONTO", "TICKET PROMEDIO", "ORIGEN"
+]
+
+columnas_eliminar = [
+    "ACUMULADO DE VENTAS", "ACUMULADO DE MONTO (PEN)", "ACUMULADO DE UNIDADES", "ACUMULADO DE MONTO",
+    "CANTIDAD DE VENTAS PRE CASTIGO", "MONTO DE VENTAS (PEN) BRUTO PRE CASTIGO", "UNIDADES PRE CASTIGO"
 ]
 
 peru_2025 = ventas_2025.copy()
 peru_2025['ORIGEN'] = 'MELI PERU'
 peru_2025.columns = columnas
 
-peru_2025 = peru_2025.drop(columns = columnas_acumulados, axis = 1)
+peru_2025 = peru_2025.drop(columns = columnas_eliminar, axis = 1)
 # Castigos por devolución, cancelación y reclamo
-for col in ['CANTIDAD DE VENTAS', 'MONTO DE VENTAS', 'UNIDADES']:
-    peru_2024[col] = pd.to_numeric(peru_2024[col], errors = 'coerce')
+for col in ['CANTIDAD DE VENTAS', 'MONTO DE VENTAS (PEN)', 'UNIDADES', 'MONTO DE VENTAS', 'VISITAS']:
+    if col in peru_2025.columns:
+        peru_2025[col] = pd.to_numeric(peru_2025[col], errors = 'coerce')
 
-peru_2025['CANTIDAD DE VENTAS'] = (peru_2025['CANTIDAD DE VENTAS'] * 0.9).round(0).astype(int)
-peru_2025['MONTO DE VENTAS'] = peru_2025['MONTO DE VENTAS'] * 0.9
-peru_2025['UNIDADES'] = (peru_2025['UNIDADES'] * 0.9).round(0).astype(int)
+peru_2025['CANTIDAD DE VENTAS'] = (peru_2025['CANTIDAD DE VENTAS']).round(0).fillna(0).astype(int)
+peru_2025['MONTO DE VENTAS (PEN)'] = (peru_2025['MONTO DE VENTAS (PEN)']).round(0).fillna(0).astype(int)
+peru_2025['UNIDADES'] = (peru_2025['UNIDADES']).round(0).fillna(0).astype(int)
+"""peru_2025['TICKET PROMEDIO (PEN)'] = peru_2025['MONTO DE VENTAS (PEN)'] / peru_2025['UNIDADES']
+peru_2025['MONTO DE VENTAS'] = peru_2025['MONTO DE VENTAS (PEN)'] * 250
+peru_2025['MONTO DE VENTAS'] = peru_2025['MONTO DE VENTAS'].round(0).fillna(0)
+peru_2025['CONVERSIÓN'] = np.divide(
+    peru_2025['CANTIDAD DE VENTAS'].to_numpy(),
+    peru_2025['VISITAS'].to_numpy(),
+    out=np.zeros_like(peru_2025['CANTIDAD DE VENTAS'].to_numpy(), dtype=float),
+    where=peru_2025['VISITAS'].to_numpy() != 0
+)"""
 
 # Guardar
 output_folder = '/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/MELI PERU'
-peru_2025.to_excel(f'{output_folder}/VENTAS ACUMULADAS MELI PERU {fecha}.xlsx', index = False)
+peru_2025.to_excel(f'{output_folder}/VENTAS ACUMULADAS MELI PERU {fecha_anterior}.xlsx', index = False)
+
+
+# 2026
+
+fila_inicio_2026 = filas_fecha[1]
+ventas_2026 = pd.read_excel(path_ventas, sheet_name = 'MELI PERÙ', header = fila_inicio_2026, usecols = 'B:U')
+
+# Limpiar fechas
+ventas_2026["FECHA"] = pd.to_datetime(ventas_2026['FECHA'], errors = 'coerce')
+ventas_2026 = ventas_2026.dropna(subset = ['FECHA'])
+ventas_2026 = ventas_2026[
+    (ventas_2026['FECHA'].dt.year == 2026) &
+    (ventas_2026['FECHA'] <= fecha_limite)
+]
+
+peru_2026 = ventas_2026.copy()
+peru_2026['ORIGEN'] = 'MELI PERU'
+peru_2026.columns = columnas
+
+peru_2026 = peru_2026.drop(columns = columnas_eliminar, axis = 1)
+# Castigos por devolución, cancelación y reclamo
+for col in ['CANTIDAD DE VENTAS', 'MONTO DE VENTAS (PEN)', 'UNIDADES', 'MONTO DE VENTAS', 'VISITAS']:
+    peru_2026[col] = pd.to_numeric(peru_2026[col], errors = 'coerce')
+
+peru_2026['CANTIDAD DE VENTAS'] = (peru_2026['CANTIDAD DE VENTAS']).round(0).fillna(0).astype(int)
+peru_2026['MONTO DE VENTAS (PEN)'] = (peru_2026['MONTO DE VENTAS (PEN)']).round(0).fillna(0)
+peru_2026['UNIDADES'] = (peru_2026['UNIDADES']).round(0).fillna(0).astype(int)
+"""peru_2026['TICKET PROMEDIO (PEN)'] = peru_2026['MONTO DE VENTAS (PEN)'] / peru_2026['UNIDADES']
+peru_2026['MONTO DE VENTAS'] = peru_2026['MONTO DE VENTAS (PEN)'] * 250
+peru_2026['MONTO DE VENTAS'] = (peru_2026['MONTO DE VENTAS']).round(0).fillna(0)
+peru_2026['TICKET PROMEDIO'] = peru_2026['TICKET PROMEDIO (PEN)'] * 250
+peru_2026['CONVERSIÓN'] = np.divide(
+    peru_2026['CANTIDAD DE VENTAS'].to_numpy(),
+    peru_2026['VISITAS'].to_numpy(),
+    out=np.zeros_like(peru_2026['CANTIDAD DE VENTAS'].to_numpy(), dtype=float),
+    where=peru_2026['VISITAS'].to_numpy() != 0
+)"""
+
+# Guardar
+output_folder = '/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/MELI PERU'
+peru_2026.to_excel(f'{output_folder}/VENTAS ACUMULADAS MELI PERU {fecha}.xlsx', index = False)

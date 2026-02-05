@@ -8,6 +8,8 @@ import os
 
 fecha = input('Ingrese la fecha de corte (YYYY-MM-DD): ')
 fecha_anterior = input('Ingrese la fecha de corte del año anterior (YYYY-MM-DD): ')
+año_actual = pd.to_datetime(fecha).year
+año_anterior = pd.to_datetime(fecha_anterior).year
 
 # Rutas
 path_autosol = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/AUTOSOL/VENTAS ACUMULADAS AUTOSOL {fecha}.xlsx'
@@ -20,6 +22,8 @@ path_ventas_digitales = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reporte
 path_ventas_ripley = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/VENTAS RIPLEY/VENTAS ACUMULADAS VENTAS RIPLEY {fecha}.xlsx'
 path_ventas_showroom = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/VENTAS SHOWROOM/VENTAS ACUMULADAS VENTAS SHOWROOM {fecha}.xlsx'
 path_walmart = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/WALMART/VENTAS ACUMULADAS WALMART {fecha}.xlsx'
+path_kia_pompeyo = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/KIA Y POMPEYO/VENTAS ACUMULADAS KIA Y POMPEYO {fecha}.xlsx'
+path_shopify = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/VENTAS SHOPIFY/VENTAS ACUMULADAS VENTAS SHOPIFY {fecha}.xlsx'
 path_autosol_ly = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/AUTOSOL/VENTAS ACUMULADAS AUTOSOL {fecha_anterior}.xlsx'
 path_ferre_ly = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/FERRE/VENTAS ACUMULADAS FERRE {fecha_anterior}.xlsx'
 path_meli_peru_ly = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/MELI PERU/VENTAS ACUMULADAS MELI PERU {fecha_anterior}.xlsx'
@@ -30,6 +34,8 @@ path_ventas_digitales_ly = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Repo
 path_ventas_ripley_ly = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/VENTAS RIPLEY/VENTAS ACUMULADAS VENTAS RIPLEY {fecha_anterior}.xlsx'
 path_ventas_showroom_ly = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/VENTAS SHOWROOM/VENTAS ACUMULADAS VENTAS SHOWROOM {fecha_anterior}.xlsx'
 path_walmart_ly = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/WALMART/VENTAS ACUMULADAS WALMART {fecha_anterior}.xlsx'
+path_kia_pompeyo_ly = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/KIA Y POMPEYO/VENTAS ACUMULADAS KIA Y POMPEYO {fecha_anterior}.xlsx'
+path_shopify_ly = f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/VENTAS SHOPIFY/VENTAS ACUMULADAS VENTAS SHOPIFY {fecha_anterior}.xlsx'
 
 paths = {
     "AUTOSOL": path_autosol,
@@ -42,6 +48,8 @@ paths = {
     "VENTAS RIPLEY": path_ventas_ripley,
     "VENTAS SHOWROOM": path_ventas_showroom,
     "WALMART": path_walmart,
+    "KIA Y POMPEYO": path_kia_pompeyo,
+    "SHOPIFY": path_shopify,
     "AUTOSOL LY": path_autosol_ly,
     "FERRE LY": path_ferre_ly,
     "MELI PERU LY": path_meli_peru_ly,
@@ -51,7 +59,9 @@ paths = {
     "VENTAS DIGITALES LY": path_ventas_digitales_ly,
     "VENTAS RIPLEY LY": path_ventas_ripley_ly,
     "VENTAS SHOWROOM LY": path_ventas_showroom_ly,
-    "WALMART LY": path_walmart_ly
+    "WALMART LY": path_walmart_ly,
+    "KIA Y POMPEYO LY": path_kia_pompeyo_ly,
+    "SHOPIFY_LY": path_shopify_ly
 }
 
 dfs = []
@@ -80,7 +90,10 @@ if dfs:
         df_final["ORIGEN"] == "MELI PERU",
         df_final["ORIGEN"] == "SERVITECA",
         df_final["ORIGEN"].isin(["RDS INTERNA", "FERRESOL INTERNA"]),
-        df_final["ORIGEN"].isin(["RDS EMPRESA", "FERRESOL EMPRESA"])
+        df_final["ORIGEN"].isin(["RDS EMPRESA", "FERRESOL EMPRESA"]),
+        df_final["ORIGEN"] == "KIA",
+        df_final["ORIGEN"] == "POMPEYO",
+        df_final["ORIGEN"].isin(["RDS SHOPIFY", "FERRESOL SHOPIFY"])
     ]
 
     resultados = [
@@ -93,7 +106,10 @@ if dfs:
         "MELI PERU",
         "VENTAS SERVITECA",
         "VENTAS INTERNA",
-        "VENTAS EMPRESA"
+        "VENTAS EMPRESA",
+        "VENTAS KIA",
+        "VENTAS POMPEYO",
+        "VENTAS SHOPIFY"
     ]
 
     df_final["SUBGRUPO"] = np.select(condiciones, resultados, default="OTROS")
@@ -105,7 +121,10 @@ if dfs:
         df_final["SUBGRUPO"].isin(["VENTAS RIPLEY", "VENTAS WALMART"]),
         df_final["SUBGRUPO"] == "VENTAS SERVITECA",
         df_final["SUBGRUPO"] == "VENTAS INTERNA",
-        df_final["SUBGRUPO"] == "VENTAS EMPRESA"
+        df_final["SUBGRUPO"] == "VENTAS EMPRESA",
+        df_final["SUBGRUPO"] == "VENTAS KIA",
+        df_final["SUBGRUPO"] == "VENTAS POMPEYO",
+        df_final["SUBGRUPO"] == "VENTAS SHOPIFY"
     ]
 
     resultados2 = [
@@ -115,10 +134,34 @@ if dfs:
         "RETAIL",
         "SERVITECA",
         "VENTA INTERNA",
-        "VENTA EMPRESA"
+        "VENTA EMPRESA",
+        "VENTA KIA",
+        "VENTA POMPEYO",
+        "VENTA SHOPIFY"
     ]
 
     df_final["GRUPO"] = np.select(condiciones2, resultados2, default="OTROS")
+
+    condiciones3 = [
+        df_final["ORIGEN"].isin(["FERREMAQ", "SANTA ELBA", "COCO",
+                                 "FERRESOL DIGITAL", "FERRESOL SHOWROOM",
+                                 "FERRESOL INTERNA", "FERRESOL EMPRESA", "FERRESOL SHOPIFY"]),
+        df_final["ORIGEN"].isin(["RDS1", "RDS3", "TRIANA", "REICARS", "TYC",
+                                 "MERCADOREPUESTOS", "BLACKPARTS", "BICISOL", 
+                                 "INDUSOL", "HYUNDAI", "MAHINDRA", "AUTOSOL", "IMPACSOL",
+                                 "RDS DIGITAL", "RDS SHOWROOM", "RIPLEY", "WALMART",
+                                 "WALMART NEUMA", "MELI PERU", "SERVITECA",
+                                 "RDS INTERNA", "RDS EMPRESA", "RDS SHOPIFY"]),
+        df_final["ORIGEN"].isin(["KIA", "POMPEYO"])
+    ]
+
+    resultados3 = [
+        "FERRESOL",
+        "RDS",
+        "KIA - POMPEYO"
+    ]
+
+    df_final["RUT"] = np.select(condiciones3, resultados3, default = "OTROS")
 
     columnas_numericas = [
         'CANTIDAD DE VENTAS', 'MONTO DE VENTAS', 'UNIDADES',
@@ -132,6 +175,7 @@ if dfs:
             df_final[col] = pd.to_numeric(df_final[col], errors = 'coerce')
 
     columnas_rellenar = [
+        'CANTIDAD DE VENTAS', 'MONTO DE VENTAS', 'UNIDADES',
         'TICKET PROMEDIO', 'CANTIDAD DE NOTAS DE CRÉDITO', 'MONTO DE NOTAS DE CRÉDITO',
         'VISITAS', 'CONVERSIÓN', 'MONTO DE VENTAS (PEN)', 'TICKET PROMEDIO (PEN)'
     ]
@@ -140,21 +184,7 @@ if dfs:
         if col in df_final.columns:
             df_final[col] = df_final[col].fillna(0)
 
-    columnas_netear = [
-        'MONTO DE VENTAS', 'TICKET PROMEDIO', 'MONTO DE NOTAS DE CRÉDITO'
-    ]
-
-    columnas_netear2 = [
-        'MONTO DE VENTAS (PEN)', 'TICKET PROMEDIO (PEN)'
-    ]
-
-    for col in columnas_netear:
-        if col in df_final.columns:
-            df_final[f"{col} NETO"] = df_final[col] / 1.19
-
-    for col in columnas_netear2:
-        if col in df_final.columns:
-            df_final[f"{col} NETO"] = df_final[col] / 1.18
+    df_final["AÑO COMPARACIÓN"] = f'{año_actual}' # Guía para entender de que año es la comparación (siempre será el año indicado contra el año pasado)
 
     df_final.to_excel(f'/Users/martincarrasco/Desktop/Martín_Carrasco/Reportes/Ventas acumuladas/Procesamiento ventas acumuladas/UNION INFORMES/INFORME VENTAS ACUMULADAS {fecha_anterior} -- {fecha}.xlsx', index = False)
     print(f"Se ha guardado el informe final con {len(df_final)} filas.")
